@@ -9,6 +9,23 @@ app = Flask(__name__, template_folder='.')
 def home():
     return render_template('index.html')
 
+@app.route('/api/subscription')
+def api_subscription():
+    api_key = "5e11351c759ab90d47805d7c58a4d6f43c7bbfc33cfe108b7c6e5f986ff4ad5e"
+    url = "https://api.elevenlabs.io/v1/user/subscription"
+    headers = {
+        "xi-api-key": api_key
+    }
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json(), 200
+        else:
+            return {"error": response.text}, response.status_code
+    except Exception as e:
+        return {"error": str(e)}, 500
+
+
 @app.route('/generate', methods=['POST'])
 def generate():
 
