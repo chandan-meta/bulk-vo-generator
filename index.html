@@ -904,6 +904,65 @@
             box-shadow: 0 0 6px #60a5fa;
         }
 
+        /* Credits Display Card */
+        .credits-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(168, 85, 247, 0.03));
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: var(--radius-md);
+            padding: 0.85rem 1rem;
+            display: none; /* Hidden by default until successfully fetched */
+            margin-top: 0.75rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .credits-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3), transparent);
+        }
+
+        .credits-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .credits-count {
+            font-family: var(--font-heading);
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+        }
+
+        .credits-progress-bg {
+            height: 5px;
+            width: 100%;
+            background-color: rgba(8, 11, 17, 0.5);
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            margin-top: 0.4rem;
+        }
+
+        .credits-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent), var(--primary));
+            border-radius: 999px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         /* Spinner for loading state */
         .spin {
             animation: spinning 1s linear infinite;
@@ -966,6 +1025,24 @@
                         <option value="eleven_monolingual_v1">eleven_monolingual_v1</option>
                         <option value="eleven_turbo_v2">eleven_turbo_v2 (Faster/Cheaper)</option>
                     </select>
+                </div>
+            </div>
+
+            <!-- Credits Card -->
+            <div class="credits-card" id="credits_card">
+                <div class="credits-info">
+                    <div style="display: flex; align-items: center; gap: 0.35rem;">
+                        <i data-lucide="sparkles" style="width: 12px; height: 12px; color: var(--accent);"></i>
+                        <span>Remaining Characters</span>
+                    </div>
+                    <span id="credits_limit_label" style="font-size: 0.65rem; color: var(--text-dark);">Limit: <span id="credits_limit">0</span></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.35rem;">
+                    <div class="credits-count" id="credits_left">0</div>
+                    <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 500;">credits</span>
+                </div>
+                <div class="credits-progress-bg">
+                    <div class="credits-progress-fill" id="credits_progress"></div>
                 </div>
             </div>
 
@@ -1128,6 +1205,34 @@
         // Initialize Icons
         lucide.createIcons();
 
+        // Fetch ElevenLabs credits status
+        async function fetchRemainingCredits() {
+            try {
+                const response = await fetch("https://api.elevenlabs.io/v1/user/subscription", {
+                    method: "GET",
+                    headers: {
+                        "xi-api-key": ELEVENLABS_API_KEY
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const used = data.character_count;
+                    const limit = data.character_limit;
+                    const remaining = Math.max(0, limit - used);
+                    const percent = limit > 0 ? Math.round((remaining / limit) * 100) : 0;
+                    
+                    document.getElementById('credits_left').textContent = remaining.toLocaleString();
+                    document.getElementById('credits_limit').textContent = limit.toLocaleString();
+                    document.getElementById('credits_progress').style.width = `${percent}%`;
+                    document.getElementById('credits_card').style.display = 'block';
+                } else {
+                    console.error("Failed to fetch credits:", response.statusText);
+                }
+            } catch (err) {
+                console.error("Error fetching credits:", err);
+            }
+        }
+
         // Retrieve saved credentials on load
         window.addEventListener('load', () => {
             const savedModelId = localStorage.getItem('elevenlabs_model_id');
@@ -1135,6 +1240,9 @@
             // Keep Voice ID empty on page load as requested
             voiceIdInput.value = "";
             if (savedModelId) modelIdSelect.value = savedModelId;
+            
+            // Fetch initial credits balance
+            fetchRemainingCredits();
         });
 
         // Save credentials helper
@@ -1464,6 +1572,9 @@
             }
             updateProgress();
             lucide.createIcons();
+            
+            // Fetch updated credits balance
+            fetchRemainingCredits();
         }
 
         // Request audio for a specific row
