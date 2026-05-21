@@ -1,4 +1,4 @@
-# 🎙️ ElevenLabs Bulk Voiceover Generator
+# 🎙️ Metabook VO Generator
 
 A premium, browser-powered web application to generate voiceover files in bulk from a CSV script using the ElevenLabs Text-to-Speech API.
 
