@@ -208,6 +208,11 @@
             box-shadow: 0 0 0 3px var(--primary-glow);
         }
 
+        input::placeholder {
+            color: var(--text-muted) !important;
+            opacity: 0.35 !important;
+        }
+
         .toggle-password {
             position: absolute;
             right: 0.75rem;
@@ -674,19 +679,6 @@
             </div>
 
             <!-- Credentials & Model Settings -->
-            <div class="form-group">
-                <label for="api_key">
-                    ElevenLabs API Key
-                    <span style="font-size: 0.7rem; color: var(--text-dark);">Saved locally</span>
-                </label>
-                <div class="input-wrapper">
-                    <i data-lucide="key" class="input-icon"></i>
-                    <input type="password" id="api_key" placeholder="Enter your ElevenLabs API key" value="5e11351c759ab90d47805d7c58a4d6f43c7bbfc33cfe108b7c6e5f986ff4ad5e">
-                    <button class="toggle-password" id="toggle_api_key_visibility" type="button" tabindex="-1">
-                        <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
-                    </button>
-                </div>
-            </div>
 
             <div class="form-group">
                 <label for="voice_id">Voice ID</label>
@@ -829,9 +821,10 @@
     </footer>
 
     <script>
+        // ElevenLabs Hardcoded API Credentials
+        const ELEVENLABS_API_KEY = "5e11351c759ab90d47805d7c58a4d6f43c7bbfc33cfe108b7c6e5f986ff4ad5e";
+
         // DOM Elements
-        const apiKeyInput = document.getElementById('api_key');
-        const toggleApiKeyVisibility = document.getElementById('toggle_api_key_visibility');
         const voiceIdInput = document.getElementById('voice_id');
         const modelIdSelect = document.getElementById('model_id');
         const dropzone = document.getElementById('dropzone');
@@ -873,35 +866,18 @@
 
         // Retrieve saved credentials on load
         window.addEventListener('load', () => {
-            const savedApiKey = localStorage.getItem('elevenlabs_api_key');
-            const savedVoiceId = localStorage.getItem('elevenlabs_voice_id');
             const savedModelId = localStorage.getItem('elevenlabs_model_id');
             
-            // Default to hardcoded API key if none is saved locally
-            apiKeyInput.value = savedApiKey || "5e11351c759ab90d47805d7c58a4d6f43c7bbfc33cfe108b7c6e5f986ff4ad5e";
-            // Default to empty Voice ID to prompt input
-            voiceIdInput.value = savedVoiceId || "";
+            // Keep Voice ID empty on page load as requested
+            voiceIdInput.value = "";
             if (savedModelId) modelIdSelect.value = savedModelId;
         });
 
         // Save credentials helper
         function saveCredentials() {
-            localStorage.setItem('elevenlabs_api_key', apiKeyInput.value.trim());
             localStorage.setItem('elevenlabs_voice_id', voiceIdInput.value.trim());
             localStorage.setItem('elevenlabs_model_id', modelIdSelect.value);
         }
-
-        // Toggle API Key visibility
-        toggleApiKeyVisibility.addEventListener('click', () => {
-            if (apiKeyInput.type === 'password') {
-                apiKeyInput.type = 'text';
-                toggleApiKeyVisibility.innerHTML = '<i data-lucide="eye-off" style="width: 16px; height: 16px;"></i>';
-            } else {
-                apiKeyInput.type = 'password';
-                toggleApiKeyVisibility.innerHTML = '<i data-lucide="eye" style="width: 16px; height: 16px;"></i>';
-            }
-            lucide.createIcons();
-        });
 
         // Set Voice ID helper
         function setVoice(id) {
@@ -911,7 +887,6 @@
         }
 
         // Handle inputs changes to save credentials
-        apiKeyInput.addEventListener('input', saveCredentials);
         voiceIdInput.addEventListener('input', saveCredentials);
         modelIdSelect.addEventListener('change', saveCredentials);
 
@@ -1172,15 +1147,10 @@
 
         // Start / Resume batch generation
         async function startBatchGeneration() {
-            const apiKey = apiKeyInput.value.trim();
+            const apiKey = ELEVENLABS_API_KEY;
             const voiceId = voiceIdInput.value.trim();
             const modelId = modelIdSelect.value;
 
-            if (!apiKey) {
-                alert("Please enter your ElevenLabs API Key.");
-                apiKeyInput.focus();
-                return;
-            }
             if (!voiceId) {
                 alert("Please enter a Voice ID.");
                 voiceIdInput.focus();
