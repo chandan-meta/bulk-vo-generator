@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.vercel/
+temp.csv
+output_vo/
+.gemini/
+.system_generated/
+.idea/
+.vscode/
+venv/
+.env

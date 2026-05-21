@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElevenLabs Bulk VO Generator</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- PapaParse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- JSZip for zipping files client-side -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        :root {
+            --bg-base: #080b11;
+            --bg-surface: #0f1420;
+            --bg-surface-elevated: #161d2f;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-glow: rgba(99, 102, 241, 0.15);
+            --accent: #a855f7;
+            --accent-glow: rgba(168, 85, 247, 0.15);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --text-dark: #6b7280;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-heading: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+        }
+
+        header {
+            padding: 2rem 1.5rem 1rem;
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        h1 {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #ffffff, #d1d5db);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge-cloud {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        main {
+            flex: 1;
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 1024px) {
+            main {
+                grid-template-columns: 420px 1fr;
+            }
+        }
+
+        .panel {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .panel-title {
+            font-family: var(--font-heading);
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 0.75rem;
+            color: var(--text-dark);
+            pointer-events: none;
+            width: 18px;
+            height: 18px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+            background-color: var(--bg-surface-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-password:hover {
+            color: var(--text-main);
+        }
+
+        /* Drag & Drop Zone */
+        .dropzone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 2rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            background-color: rgba(22, 29, 47, 0.3);
+        }
+
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--primary);
+            background-color: rgba(99, 102, 241, 0.05);
+        }
+
+        .dropzone-icon {
+            color: var(--primary);
+            width: 36px;
+            height: 36px;
+        }
+
+        .dropzone text {
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        .dropzone-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--bg-surface-elevated);
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .file-info-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .btn-remove-file {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .btn-remove-file:hover {
+            color: var(--danger);
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 0.85rem;
+            border-radius: var(--radius-md);
+            border: none;
+            font-family: var(--font-heading);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-primary:disabled {
+            background: var(--bg-surface-elevated);
+            color: var(--text-dark);
+            cursor: not-allowed;
+            box-shadow: none;
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-surface-elevated);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: rgba(255,255,255,0.05);
+            border-color: var(--border-hover);
+        }
+
+        .btn-danger {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            background-color: rgba(239, 68, 68, 0.25);
+        }
+
+        .actions-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        /* Right Panel & Content */
+        .workspace-panel {
+            min-height: 500px;
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            gap: 1rem;
+            text-align: center;
+            padding: 3rem 1.5rem;
+        }
+
+        .empty-state-icon {
+            width: 48px;
+            height: 48px;
+            color: var(--text-dark);
+            stroke-width: 1.5;
+        }
+
+        /* Progress Card */
+        .progress-card {
+            background: linear-gradient(135deg, rgba(22, 29, 47, 0.6), rgba(15, 20, 32, 0.8));
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar-bg {
+            height: 8px;
+            width: 100%;
+            background-color: var(--bg-base);
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 999px;
+            transition: width 0.3s ease;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            text-align: center;
+        }
+
+        .stat-item {
+            background-color: rgba(8, 11, 17, 0.4);
+            padding: 0.5rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+
+        .stat-val {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.15rem;
+        }
+
+        /* Table & Row Queue */
+        .queue-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            overflow: hidden;
+        }
+
+        .queue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .queue-list {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background-color: rgba(8, 11, 17, 0.3);
+            max-height: 400px;
+        }
+
+        /* Custom Scrollbar */
+        .queue-list::-webkit-scrollbar, .console-logs::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .queue-list::-webkit-scrollbar-track, .console-logs::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .queue-list::-webkit-scrollbar-thumb, .console-logs::-webkit-scrollbar-thumb {
+            background: var(--border-hover);
+            border-radius: 3px;
+        }
+
+        .queue-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border);
+            gap: 1rem;
+            transition: background-color 0.15s ease;
+        }
+
+        .queue-item:last-child {
+            border-bottom: none;
+        }
+
+        .queue-item:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .queue-item-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            min-width: 0;
+        }
+
+        .queue-item-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .queue-item-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .queue-item-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: var(--radius-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .badge-pending {
+            background-color: rgba(107, 114, 128, 0.15);
+            color: var(--text-muted);
+            border: 1px solid rgba(107, 114, 128, 0.2);
+        }
+
+        .badge-generating {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .badge-success {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .badge-error {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Compact Audio Player */
+        .audio-preview-btn {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .audio-preview-btn:hover {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* Live Console Logger */
+        .console-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .console-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .console-logs {
+            background-color: #05070c;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 0.75rem 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: #a7f3d0; /* emerald green-ish */
+            max-height: 120px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .log-entry {
+            line-height: 1.4;
+        }
+
+        .log-time {
+            color: var(--text-dark);
+            margin-right: 0.5rem;
+        }
+
+        .log-err {
+            color: #f87171;
+        }
+
+        .log-success {
+            color: #34d399;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dark);
+            border-top: 1px solid var(--border);
+            margin-top: auto;
+        }
+
+        /* Spinner for loading state */
+        .spin {
+            animation: spinning 1s linear infinite;
+        }
+
+        @keyframes spinning {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">
+                <i data-lucide="audio-lines"></i>
+            </div>
+            <div>
+                <h1>Bulk VO Generator</h1>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">ElevenLabs Audio Generator</p>
+            </div>
+        </div>
+        <div class="badge-cloud">
+            <i data-lucide="server" style="width: 12px; height: 12px;"></i>
+            Vercel Ready
+        </div>
+    </header>
+
+    <main>
+        <!-- Configuration Panel -->
+        <div class="panel">
+            <div class="panel-title">
+                <i data-lucide="settings" style="width: 18px; height: 18px; color: var(--primary);"></i>
+                Configuration
+            </div>
+
+            <!-- Credentials & Model Settings -->
+            <div class="form-group">
+                <label for="api_key">
+                    ElevenLabs API Key
+                    <span style="font-size: 0.7rem; color: var(--text-dark);">Saved locally</span>
+                </label>
+                <div class="input-wrapper">
+                    <i data-lucide="key" class="input-icon"></i>
+                    <input type="password" id="api_key" placeholder="Enter your ElevenLabs API key">
+                    <button class="toggle-password" id="toggle_api_key_visibility" type="button" tabindex="-1">
+                        <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="voice_id">Voice ID</label>
+                <div class="input-wrapper">
+                    <i data-lucide="mic" class="input-icon"></i>
+                    <input type="text" id="voice_id" placeholder="e.g. 21m00Tcm4TlvDq8ikWAM" value="21m00Tcm4TlvDq8ikWAM">
+                </div>
+                <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.25rem;">
+                    <span style="font-size: 0.7rem; background-color: var(--bg-surface-elevated); padding: 0.15rem 0.35rem; border-radius: 4px; cursor: pointer; border: 1px solid var(--border);" onclick="setVoice('21m00Tcm4TlvDq8ikWAM')">Rachel (Female)</span>
+                    <span style="font-size: 0.7rem; background-color: var(--bg-surface-elevated); padding: 0.15rem 0.35rem; border-radius: 4px; cursor: pointer; border: 1px solid var(--border);" onclick="setVoice('AZnzlk1XvdvUeBnXmlld')">Domi (Female)</span>
+                    <span style="font-size: 0.7rem; background-color: var(--bg-surface-elevated); padding: 0.15rem 0.35rem; border-radius: 4px; cursor: pointer; border: 1px solid var(--border);" onclick="setVoice('ErXwobaYiN019PkySvjV')">Antoni (Male)</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="model_id">Model ID</label>
+                <div class="input-wrapper">
+                    <i data-lucide="cpu" class="input-icon"></i>
+                    <select id="model_id">
+                        <option value="eleven_multilingual_v2" selected>eleven_multilingual_v2 (Recommended)</option>
+                        <option value="eleven_monolingual_v1">eleven_monolingual_v1</option>
+                        <option value="eleven_turbo_v2">eleven_turbo_v2 (Faster/Cheaper)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid var(--border); margin: 0.5rem 0;"></div>
+
+            <!-- CSV Upload Panel -->
+            <div class="panel-title">
+                <i data-lucide="file-spreadsheet" style="width: 18px; height: 18px; color: var(--accent);"></i>
+                Upload Script (CSV)
+            </div>
+
+            <!-- Upload Dropzone -->
+            <div class="dropzone" id="dropzone">
+                <i data-lucide="upload-cloud" class="dropzone-icon"></i>
+                <text>Drag and drop your script file here</text>
+                <span class="dropzone-subtitle">Supports .csv (headers: filename, text)</span>
+                <input type="file" id="file_input" accept=".csv" style="display: none;">
+            </div>
+
+            <!-- Loaded File Info -->
+            <div class="file-info" id="file_info_box" style="display: none;">
+                <div class="file-info-left">
+                    <i data-lucide="file" style="color: var(--primary); width: 16px; height: 16px;"></i>
+                    <span id="file_name" style="font-weight: 500;">script.csv</span>
+                    <span id="file_size" style="color: var(--text-muted); font-size: 0.75rem;">(1.2 KB)</span>
+                </div>
+                <button class="btn-remove-file" id="btn_remove_file" title="Remove script">
+                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                </button>
+            </div>
+
+            <button class="btn btn-primary" id="btn_start" disabled>
+                <i data-lucide="play" style="width: 18px; height: 18px;"></i>
+                Generate Audio files
+            </button>
+        </div>
+
+        <!-- Workspace Panel (Right) -->
+        <div class="panel workspace-panel">
+            <!-- Empty State -->
+            <div class="empty-state" id="empty_state">
+                <i data-lucide="audio-lines" class="empty-state-icon"></i>
+                <div>
+                    <h3 style="color: white; font-family: var(--font-heading); margin-bottom: 0.25rem;">No script loaded</h3>
+                    <p style="font-size: 0.85rem;">Upload a CSV file to parse the voiceover rows and start generating audio.</p>
+                </div>
+            </div>
+
+            <!-- Active Workspace (Queue, Progress, Actions) -->
+            <div class="queue-container" id="active_workspace" style="display: none;">
+                <!-- Progress Card -->
+                <div class="progress-card">
+                    <div class="progress-info">
+                        <span style="font-weight: 600;" id="progress_status">Ready to generate</span>
+                        <span id="progress_percent" style="font-weight: 500; font-family: var(--font-mono);">0%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progress_bar"></div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-val" id="stat_total">0</div>
+                            <div class="stat-label">Total</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-val" id="stat_done" style="color: var(--success);">0</div>
+                            <div class="stat-label">Done</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-val" id="stat_pending" style="color: var(--text-muted);">0</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-val" id="stat_failed" style="color: var(--danger);">0</div>
+                            <div class="stat-label">Failed</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Toolbar -->
+                <div class="actions-row">
+                    <button class="btn btn-secondary" id="btn_control" disabled>
+                        <i data-lucide="play" style="width: 16px; height: 16px;"></i>
+                        Start Generation
+                    </button>
+                    <button class="btn btn-primary" id="btn_zip" disabled>
+                        <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                        Download ZIP
+                    </button>
+                </div>
+
+                <!-- Queue List -->
+                <div class="queue-header">
+                    <span style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Voiceover Items</span>
+                    <span id="row_count" style="font-size: 0.8rem; color: var(--text-dark);">0 items loaded</span>
+                </div>
+                <div class="queue-list" id="queue_list">
+                    <!-- Dynamic items go here -->
+                </div>
+
+                <!-- Console Panel -->
+                <div class="console-panel">
+                    <div class="console-header">
+                        <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Console Logs</span>
+                        <span style="font-size: 0.7rem; color: var(--primary); cursor: pointer;" onclick="clearLogs()">Clear Logs</span>
+                    </div>
+                    <div class="console-logs" id="console_logs">
+                        <div class="log-entry"><span class="log-time">--:--:--</span>System initialized. Awaiting CSV file.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        ElevenLabs Bulk VO Generator | Powered by Vercel & Client-Side Javascript
+    </footer>
+
+    <script>
+        // DOM Elements
+        const apiKeyInput = document.getElementById('api_key');
+        const toggleApiKeyVisibility = document.getElementById('toggle_api_key_visibility');
+        const voiceIdInput = document.getElementById('voice_id');
+        const modelIdSelect = document.getElementById('model_id');
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('file_input');
+        const fileInfoBox = document.getElementById('file_info_box');
+        const fileNameSpan = document.getElementById('file_name');
+        const fileSizeSpan = document.getElementById('file_size');
+        const btnRemoveFile = document.getElementById('btn_remove_file');
+        const btnStart = document.getElementById('btn_start');
+        
+        const emptyState = document.getElementById('empty_state');
+        const activeWorkspace = document.getElementById('active_workspace');
+        const progressStatus = document.getElementById('progress_status');
+        const progressPercent = document.getElementById('progress_percent');
+        const progressBar = document.getElementById('progress_bar');
+        
+        const statTotal = document.getElementById('stat_total');
+        const statDone = document.getElementById('stat_done');
+        const statPending = document.getElementById('stat_pending');
+        const statFailed = document.getElementById('stat_failed');
+        
+        const btnControl = document.getElementById('btn_control');
+        const btnZip = document.getElementById('btn_zip');
+        const rowCountText = document.getElementById('row_count');
+        const queueList = document.getElementById('queue_list');
+        const consoleLogs = document.getElementById('console_logs');
+
+        // Application State
+        let parsedRows = [];
+        let generatedBlobs = {}; // filename -> blob
+        let rowStatuses = []; // index -> 'pending', 'generating', 'success', 'error'
+        let isGenerating = false;
+        let activeIndex = -1;
+        let isPaused = false;
+        let audioElements = {}; // filename -> Audio element
+
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Retrieve saved credentials on load
+        window.addEventListener('load', () => {
+            const savedApiKey = localStorage.getItem('elevenlabs_api_key');
+            const savedVoiceId = localStorage.getItem('elevenlabs_voice_id');
+            const savedModelId = localStorage.getItem('elevenlabs_model_id');
+            if (savedApiKey) apiKeyInput.value = savedApiKey;
+            if (savedVoiceId) voiceIdInput.value = savedVoiceId;
+            if (savedModelId) modelIdSelect.value = savedModelId;
+        });
+
+        // Save credentials helper
+        function saveCredentials() {
+            localStorage.setItem('elevenlabs_api_key', apiKeyInput.value.trim());
+            localStorage.setItem('elevenlabs_voice_id', voiceIdInput.value.trim());
+            localStorage.setItem('elevenlabs_model_id', modelIdSelect.value);
+        }
+
+        // Toggle API Key visibility
+        toggleApiKeyVisibility.addEventListener('click', () => {
+            if (apiKeyInput.type === 'password') {
+                apiKeyInput.type = 'text';
+                toggleApiKeyVisibility.innerHTML = '<i data-lucide="eye-off" style="width: 16px; height: 16px;"></i>';
+            } else {
+                apiKeyInput.type = 'password';
+                toggleApiKeyVisibility.innerHTML = '<i data-lucide="eye" style="width: 16px; height: 16px;"></i>';
+            }
+            lucide.createIcons();
+        });
+
+        // Set Voice ID helper
+        function setVoice(id) {
+            voiceIdInput.value = id;
+            saveCredentials();
+            addLog(`Set Voice ID: ${id}`);
+        }
+
+        // Handle inputs changes to save credentials
+        apiKeyInput.addEventListener('input', saveCredentials);
+        voiceIdInput.addEventListener('input', saveCredentials);
+        modelIdSelect.addEventListener('change', saveCredentials);
+
+        // File Selection Handlers
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        btnRemoveFile.addEventListener('click', () => {
+            resetState();
+            addLog("Script removed. Queue cleared.");
+        });
+
+        // Parse and Handle Script File
+        function handleFile(file) {
+            if (!file.name.endsWith('.csv')) {
+                alert("Please upload a valid CSV file.");
+                addLog("Error: Invalid file type uploaded. Must be .csv", true);
+                return;
+            }
+
+            // Display file details
+            fileNameSpan.textContent = file.name;
+            const sizeKB = (file.size / 1024).toFixed(1);
+            fileSizeSpan.textContent = `(${sizeKB} KB)`;
+            dropzone.style.display = 'none';
+            fileInfoBox.style.display = 'flex';
+
+            addLog(`Parsing CSV: ${file.name}...`);
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.errors.length > 0) {
+                        addLog(`CSV Warning: Parsed with ${results.errors.length} minor warnings.`, true);
+                    }
+                    
+                    const rows = results.data.map(row => {
+                        // Normalize keys case-insensitively
+                        const filenameKey = Object.keys(row).find(k => k.toLowerCase().trim() === 'filename');
+                        const textKey = Object.keys(row).find(k => k.toLowerCase().trim() === 'text');
+                        
+                        return {
+                            filename: filenameKey ? row[filenameKey].trim() : '',
+                            text: textKey ? row[textKey].trim() : ''
+                        };
+                    }).filter(r => r.filename !== '' || r.text !== '');
+
+                    if (rows.length === 0) {
+                        alert("The CSV doesn't contain valid 'filename' and 'text' columns.");
+                        addLog("Error: CSV does not have 'filename' and 'text' columns or has empty data.", true);
+                        resetState();
+                        return;
+                    }
+
+                    parsedRows = rows;
+                    rowStatuses = new Array(rows.length).fill('pending');
+                    generatedBlobs = {};
+                    audioElements = {};
+                    
+                    addLog(`Loaded ${rows.length} rows from script.`);
+                    setupWorkspace();
+                },
+                error: function(err) {
+                    alert("Error parsing CSV: " + err.message);
+                    addLog(`Error parsing CSV: ${err.message}`, true);
+                    resetState();
+                }
+            });
+        }
+
+        // Setup Queue Workspace UI
+        function setupWorkspace() {
+            emptyState.style.display = 'none';
+            activeWorkspace.style.display = 'flex';
+            
+            statTotal.textContent = parsedRows.length;
+            statPending.textContent = parsedRows.length;
+            statDone.textContent = '0';
+            statFailed.textContent = '0';
+            rowCountText.textContent = `${parsedRows.length} items loaded`;
+            
+            btnStart.disabled = false;
+            btnControl.disabled = false;
+            btnControl.innerHTML = '<i data-lucide="play" style="width: 16px; height: 16px;"></i>Start Generation';
+            btnZip.disabled = true;
+
+            renderQueue();
+            updateProgress();
+            lucide.createIcons();
+        }
+
+        // Render queue rows
+        function renderQueue() {
+            queueList.innerHTML = '';
+            parsedRows.forEach((row, index) => {
+                const status = rowStatuses[index];
+                const item = document.createElement('div');
+                item.className = 'queue-item';
+                item.id = `queue-row-${index}`;
+                
+                let badgeClass = 'badge-pending';
+                let statusText = 'Pending';
+                let badgeIcon = 'circle-dashed';
+
+                if (status === 'generating') {
+                    badgeClass = 'badge-generating';
+                    statusText = 'Generating';
+                    badgeIcon = 'loader-2 spin';
+                } else if (status === 'success') {
+                    badgeClass = 'badge-success';
+                    statusText = 'Ready';
+                    badgeIcon = 'check-circle';
+                } else if (status === 'error') {
+                    badgeClass = 'badge-error';
+                    statusText = 'Error';
+                    badgeIcon = 'alert-triangle';
+                }
+
+                item.innerHTML = `
+                    <div class="queue-item-details">
+                        <div class="queue-item-title">${row.filename || `Row ${index + 1}`}</div>
+                        <div class="queue-item-text" title="${row.text}">${row.text}</div>
+                    </div>
+                    <div class="queue-item-right">
+                        <span class="badge ${badgeClass}">
+                            <i data-lucide="${badgeIcon}" style="width: 12px; height: 12px;"></i>
+                            ${statusText}
+                        </span>
+                        ${status === 'success' ? `
+                            <button class="audio-preview-btn" onclick="playPreview(${index})" id="play-btn-${index}" title="Play preview">
+                                <i data-lucide="play" style="width: 14px; height: 14px;"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                queueList.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        // Clear log window
+        function clearLogs() {
+            consoleLogs.innerHTML = '';
+        }
+
+        // Logger helper
+        function addLog(message, isError = false, isSuccess = false) {
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            if (isError) entry.classList.add('log-err');
+            if (isSuccess) entry.classList.add('log-success');
+            
+            entry.innerHTML = `<span class="log-time">[${time}]</span>${message}`;
+            consoleLogs.appendChild(entry);
+            consoleLogs.scrollTop = consoleLogs.scrollHeight;
+        }
+
+        // Update progress indicators
+        function updateProgress() {
+            const total = parsedRows.length;
+            const done = rowStatuses.filter(s => s === 'success').length;
+            const failed = rowStatuses.filter(s => s === 'error').length;
+            const pending = rowStatuses.filter(s => s === 'pending').length;
+            const generating = rowStatuses.filter(s => s === 'generating').length;
+
+            statDone.textContent = done;
+            statFailed.textContent = failed;
+            statPending.textContent = pending;
+
+            const percentage = total > 0 ? Math.round(((done + failed) / total) * 100) : 0;
+            progressPercent.textContent = `${percentage}%`;
+            progressBar.style.width = `${percentage}%`;
+
+            if (isGenerating) {
+                progressStatus.textContent = `Generating audio... (${done + failed}/${total})`;
+            } else if (isPaused) {
+                progressStatus.textContent = `Paused (${done + failed}/${total})`;
+            } else if (done === total) {
+                progressStatus.textContent = `Completed! ${done} generated successfully.`;
+            } else if (done + failed > 0) {
+                progressStatus.textContent = `Stopped. ${done} successful, ${failed} failed.`;
+            } else {
+                progressStatus.textContent = 'Ready to generate';
+            }
+
+            // Enable zip download if at least one file has been successfully generated
+            btnZip.disabled = done === 0;
+        }
+
+        // Reset UI state
+        function resetState() {
+            parsedRows = [];
+            generatedBlobs = {};
+            rowStatuses = [];
+            isGenerating = false;
+            activeIndex = -1;
+            isPaused = false;
+            audioElements = {};
+
+            fileInput.value = '';
+            dropzone.style.display = 'flex';
+            fileInfoBox.style.display = 'none';
+            btnStart.disabled = true;
+            
+            emptyState.style.display = 'flex';
+            activeWorkspace.style.display = 'none';
+        }
+
+        // Start Generation Button handlers
+        btnStart.addEventListener('click', () => {
+            if (!isGenerating && !isPaused) {
+                startBatchGeneration();
+            }
+        });
+
+        btnControl.addEventListener('click', () => {
+            if (isGenerating) {
+                pauseBatchGeneration();
+            } else {
+                startBatchGeneration();
+            }
+        });
+
+        // Pause batch generation
+        function pauseBatchGeneration() {
+            isGenerating = false;
+            isPaused = true;
+            btnControl.innerHTML = '<i data-lucide="play" style="width: 16px; height: 16px;"></i>Resume';
+            btnStart.disabled = false;
+            updateProgress();
+            addLog("Generation paused by user.");
+            lucide.createIcons();
+        }
+
+        // Start / Resume batch generation
+        async function startBatchGeneration() {
+            const apiKey = apiKeyInput.value.trim();
+            const voiceId = voiceIdInput.value.trim();
+            const modelId = modelIdSelect.value;
+
+            if (!apiKey) {
+                alert("Please enter your ElevenLabs API Key.");
+                apiKeyInput.focus();
+                return;
+            }
+            if (!voiceId) {
+                alert("Please enter a Voice ID.");
+                voiceIdInput.focus();
+                return;
+            }
+
+            isGenerating = true;
+            isPaused = false;
+            btnStart.disabled = true;
+            btnControl.disabled = false;
+            btnControl.innerHTML = '<i data-lucide="pause" style="width: 16px; height: 16px;"></i>Pause';
+            btnControl.classList.remove('btn-secondary');
+            btnControl.classList.add('btn-danger');
+            
+            addLog("Starting batch generation queue...");
+            lucide.createIcons();
+
+            // Find first pending index
+            if (activeIndex === -1 || activeIndex >= parsedRows.length) {
+                activeIndex = 0;
+            }
+
+            while (activeIndex < parsedRows.length && isGenerating) {
+                // If it is already success or has another non-pending status (and we are resuming), skip it unless we start fresh
+                if (rowStatuses[activeIndex] === 'success') {
+                    activeIndex++;
+                    continue;
+                }
+
+                await generateRow(activeIndex, apiKey, voiceId, modelId);
+                activeIndex++;
+            }
+
+            // End of loop checks
+            isGenerating = false;
+            btnControl.classList.remove('btn-danger');
+            btnControl.classList.add('btn-secondary');
+            btnStart.disabled = false;
+
+            if (activeIndex >= parsedRows.length) {
+                activeIndex = -1; // reset active index on complete
+                btnControl.innerHTML = '<i data-lucide="rotate-ccw" style="width: 16px; height: 16px;"></i>Restart';
+                addLog("Batch generation sequence completed!", false, true);
+            } else {
+                // Was paused
+                btnControl.innerHTML = '<i data-lucide="play" style="width: 16px; height: 16px;"></i>Resume';
+            }
+            updateProgress();
+            lucide.createIcons();
+        }
+
+        // Request audio for a specific row
+        async function generateRow(index, apiKey, voiceId, modelId) {
+            const row = parsedRows[index];
+            rowStatuses[index] = 'generating';
+            updateRowUI(index);
+            updateProgress();
+
+            const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
+            addLog(`[Row ${index + 1}/${parsedRows.length}] Requesting voiceover for "${row.filename}.mp3"...`);
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'audio/mpeg',
+                        'Content-Type': 'application/json',
+                        'xi-api-key': apiKey
+                    },
+                    body: JSON.stringify({
+                        text: row.text,
+                        model_id: modelId,
+                        voice_settings: {
+                            stability: 0.5,
+                            similarity_boost: 0.75
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`API returned status ${response.status}: ${errText}`);
+                }
+
+                const blob = await response.blob();
+                generatedBlobs[row.filename] = blob;
+                rowStatuses[index] = 'success';
+                
+                // Set up local Audio element for playing previews
+                const audioUrl = URL.createObjectURL(blob);
+                audioElements[index] = new Audio(audioUrl);
+                
+                addLog(`[Row ${index + 1}/${parsedRows.length}] Successfully generated "${row.filename}.mp3"`, false, true);
+            } catch (err) {
+                console.error(err);
+                rowStatuses[index] = 'error';
+                addLog(`[Row ${index + 1}/${parsedRows.length}] Failed to generate "${row.filename}.mp3": ${err.message}`, true);
+            }
+
+            updateRowUI(index);
+            updateProgress();
+        }
+
+        // Dynamically update UI of a specific queue row
+        function updateRowUI(index) {
+            const item = document.getElementById(`queue-row-${index}`);
+            if (!item) return;
+
+            const status = rowStatuses[index];
+            const rightDiv = item.querySelector('.queue-item-right');
+            const badgeSpan = rightDiv.querySelector('.badge');
+
+            // Remove existing badge classes
+            badgeSpan.className = 'badge';
+            
+            let badgeClass = 'badge-pending';
+            let statusText = 'Pending';
+            let badgeIcon = 'circle-dashed';
+
+            if (status === 'generating') {
+                badgeClass = 'badge-generating';
+                statusText = 'Generating';
+                badgeIcon = 'loader-2 spin';
+            } else if (status === 'success') {
+                badgeClass = 'badge-success';
+                statusText = 'Ready';
+                badgeIcon = 'check-circle';
+            } else if (status === 'error') {
+                badgeClass = 'badge-error';
+                statusText = 'Error';
+                badgeIcon = 'alert-triangle';
+            }
+
+            badgeSpan.classList.add(badgeClass);
+            badgeSpan.innerHTML = `
+                <i data-lucide="${badgeIcon}" style="width: 12px; height: 12px;"></i>
+                ${statusText}
+            `;
+
+            // If success, add preview button if it doesn't exist
+            let playBtn = rightDiv.querySelector('.audio-preview-btn');
+            if (status === 'success' && !playBtn) {
+                const btn = document.createElement('button');
+                btn.className = 'audio-preview-btn';
+                btn.id = `play-btn-${index}`;
+                btn.title = "Play preview";
+                btn.onclick = () => playPreview(index);
+                btn.innerHTML = '<i data-lucide="play" style="width: 14px; height: 14px;"></i>';
+                rightDiv.appendChild(btn);
+            } else if (status !== 'success' && playBtn) {
+                playBtn.remove();
+            }
+
+            lucide.createIcons();
+        }
+
+        // Audio preview play/pause controller
+        function playPreview(index) {
+            const audio = audioElements[index];
+            const btn = document.getElementById(`play-btn-${index}`);
+            if (!audio || !btn) return;
+
+            // Pause other playing audios
+            Object.keys(audioElements).forEach(idx => {
+                if (parseInt(idx) !== index && !audioElements[idx].paused) {
+                    audioElements[idx].pause();
+                    const otherBtn = document.getElementById(`play-btn-${idx}`);
+                    if (otherBtn) {
+                        otherBtn.innerHTML = '<i data-lucide="play" style="width: 14px; height: 14px;"></i>';
+                    }
+                }
+            });
+
+            if (audio.paused) {
+                audio.play();
+                btn.innerHTML = '<i data-lucide="pause" style="width: 14px; height: 14px;"></i>';
+                audio.onended = () => {
+                    btn.innerHTML = '<i data-lucide="play" style="width: 14px; height: 14px;"></i>';
+                    lucide.createIcons();
+                };
+            } else {
+                audio.pause();
+                btn.innerHTML = '<i data-lucide="play" style="width: 14px; height: 14px;"></i>';
+            }
+            lucide.createIcons();
+        }
+
+        // ZIP Exporter Handler
+        btnZip.addEventListener('click', async () => {
+            const doneCount = rowStatuses.filter(s => s === 'success').length;
+            if (doneCount === 0) return;
+
+            btnZip.disabled = true;
+            btnZip.innerHTML = '<i data-lucide="loader-2" class="spin" style="width: 16px; height: 16px;"></i>Zipping...';
+            addLog(`Generating ZIP archive with ${doneCount} audio files...`);
+            lucide.createIcons();
+
+            try {
+                const zip = new JSZip();
+                
+                // Add blobs to zip
+                for (const filename of Object.keys(generatedBlobs)) {
+                    zip.file(`${filename}.mp3`, generatedBlobs[filename]);
+                }
+
+                const contentBlob = await zip.generateAsync({ type: 'blob' });
+                const downloadUrl = URL.createObjectURL(contentBlob);
+                
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `vo_audio_${Date.now()}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                document.body.removeChild(a);
+                URL.revokeObjectURL(downloadUrl);
+                
+                addLog("ZIP archive downloaded successfully!", false, true);
+            } catch (err) {
+                console.error(err);
+                addLog(`Error zipping files: ${err.message}`, true);
+                alert("Failed to build ZIP file.");
+            }
+
+            btnZip.disabled = false;
+            btnZip.innerHTML = '<i data-lucide="download" style="width: 16px; height: 16px;"></i>Download ZIP';
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

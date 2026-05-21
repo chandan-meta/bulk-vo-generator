@@ -1,0 +1,11 @@
+app.py
+vo.csv
+templates/
+output_vo/
+temp.csv
+.git
+.gemini
+.system_generated/
+walkthrough.md
+task.md
+implementation_plan.md

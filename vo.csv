@@ -1,0 +1,22 @@
+filename,text
+scene 1,"Welcome to Stellar Evolution.”
+“Look around you.”
+“You’re surrounded by vast distances.”
+ “And countless points of light.”
+“To begin…Raise your hand in front of you and open your palm.”
+(ghost hand appears demonstrating)
+   “Now make a fist… and gently pull it toward you.”
+“As you do, we’ll move closer.”
+Once interaction is complete and animation starts, below VO will play - "
+scene 2,"“Across the universe, matter exists in simple forms.”
+“Cold gas.”
+“Fine dust.”
+“And for long stretches of time, it drifts without change.”"
+scene 3,"“Stars are born inside nebulae.”
+“These are enormous clouds of gas and dust — mostly hydrogen and helium.”
+“At first, nothing dramatic happens.”
+(pause)
+“But gravity is already at work.”"
+scene 4,"Gravity pulls every particle toward every other particle.”
+ “In a nebula, this pull is weak…”
+ “But over millions of years, it adds up.”"

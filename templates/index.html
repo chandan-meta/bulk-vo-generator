@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>11Labs Bulk VO Generator</title>
+
+<style>
+    body{
+        font-family: Arial, sans-serif;
+        background:#111827;
+        color:white;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        height:100vh;
+        margin:0;
+    }
+
+    .container{
+        width:500px;
+        background:#1f2937;
+        padding:30px;
+        border-radius:15px;
+        box-shadow:0 0 20px rgba(0,0,0,0.3);
+    }
+
+    h1{
+        text-align:center;
+        margin-bottom:25px;
+    }
+
+    label{
+        display:block;
+        margin-top:15px;
+        margin-bottom:8px;
+    }
+
+    input{
+        width:100%;
+        padding:12px;
+        border:none;
+        border-radius:8px;
+        background:#374151;
+        color:white;
+    }
+
+    button{
+        width:100%;
+        padding:14px;
+        margin-top:25px;
+        border:none;
+        border-radius:10px;
+        background:#2563eb;
+        color:white;
+        font-size:16px;
+        cursor:pointer;
+    }
+
+    button:hover{
+        background:#1d4ed8;
+    }
+
+    .status{
+        margin-top:20px;
+        text-align:center;
+        color:#10b981;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>11Labs Bulk VO Generator</h1>
+
+    <form action="/generate" method="POST" enctype="multipart/form-data">
+
+        <label>Upload CSV</label>
+        <input type="file" name="csv_file" accept=".csv" required>
+
+        <label>Output Folder Path</label>
+        <input type="text" name="output_folder" placeholder="D:\output_audio" required>
+
+        <label>ElevenLabs API Key</label>
+        <input type="password" name="api_key" required>
+
+        <label>Voice ID</label>
+        <input type="text" name="voice_id" required>
+
+        <button type="submit">Generate Audio</button>
+
+    </form>
+
+    <div class="status">
+        {{status}}
+    </div>
+
+</div>
+
+</body>
+</html>
