@@ -4,308 +4,263 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metabook VO Generator</title>
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- PapaParse for CSV parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <!-- JSZip for zipping files client-side -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
     <style>
         :root {
-            --bg-base: #080b11;
-            --bg-surface: #0f1420;
-            --bg-surface-elevated: #161d2f;
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --primary-glow: rgba(99, 102, 241, 0.15);
-            --accent: #a855f7;
-            --accent-glow: rgba(168, 85, 247, 0.15);
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --text-dark: #6b7280;
-            --border: rgba(255, 255, 255, 0.08);
+            --bg: #070b14;
+            --surface: #0f1727;
+            --surface2: #131d31;
+            --border: rgba(255, 255, 255, .08);
             --border-hover: rgba(255, 255, 255, 0.15);
+
+            --primary: #7c3aed;
+            --secondary: #6366f1;
+            --primary-glow: rgba(124, 58, 237, 0.15);
+
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --text-dark: #6b7280;
+
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
-            --radius-lg: 16px;
-            --radius-md: 12px;
+
+            --radius: 18px;
+            --radius-md: 14px;
             --radius-sm: 8px;
-            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            
+            --font-sans: 'Inter', sans-serif;
             --font-heading: 'Outfit', sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
         }
 
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
 
         body {
             font-family: var(--font-sans);
-            background-color: var(--bg-base);
-            background-image: 
-                radial-gradient(circle at 50% 50%, #0b0e17 0%, #030407 100%);
-            color: var(--text-main);
+            background: radial-gradient(circle at top, #10172a 0%, #05070d 100%);
+            color: var(--text);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            line-height: 1.5;
-            position: relative;
             overflow-x: hidden;
+            position: relative;
         }
 
-        /* Subtle retro cybernetic grid background */
+        /* Ambient background glow */
         body::before {
             content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(rgba(99, 102, 241, 0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(99, 102, 241, 0.02) 1px, transparent 1px);
-            background-size: 50px 50px;
-            background-position: center center;
-            z-index: -2;
+            inset: 0;
+            background: radial-gradient(circle at top left, rgba(124, 58, 237, .15), transparent 35%),
+                        radial-gradient(circle at bottom right, rgba(99, 102, 241, .12), transparent 40%);
             pointer-events: none;
-        }
-
-        /* Ambient animated backgrounds */
-        .ambient-glow-1 {
-            position: fixed;
-            top: -10%;
-            left: -10%;
-            width: 50vw;
-            height: 50vw;
-            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0) 70%);
-            border-radius: 50%;
-            filter: blur(90px);
             z-index: -1;
-            pointer-events: none;
-            animation: floatGlow1 20s ease-in-out infinite alternate;
-        }
-        
-        .ambient-glow-2 {
-            position: fixed;
-            bottom: -10%;
-            right: -10%;
-            width: 60vw;
-            height: 60vw;
-            background: radial-gradient(circle, rgba(168, 85, 247, 0.1) 0%, rgba(168, 85, 247, 0) 70%);
-            border-radius: 50%;
-            filter: blur(110px);
-            z-index: -1;
-            pointer-events: none;
-            animation: floatGlow2 25s ease-in-out infinite alternate;
         }
 
-        @keyframes floatGlow1 {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(80px, 100px) scale(1.2); }
-        }
-
-        @keyframes floatGlow2 {
-            0% { transform: translate(0, 0) scale(1.1); }
-            100% { transform: translate(-100px, -80px) scale(0.95); }
-        }
-
-        @keyframes shineText {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        @keyframes progressGlow {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 200% 50%; }
-        }
-
-        header {
-            padding: 1.25rem 2rem;
-            max-width: 1240px;
-            width: calc(100% - 3rem);
-            margin: 1.5rem auto 0.5rem;
+        .app {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(15, 20, 32, 0.55);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: var(--radius-lg);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-            position: sticky;
-            top: 1.25rem;
-            z-index: 100;
+            min-height: 100vh;
         }
 
-        .logo-container {
+        /* Sidebar styling */
+        .sidebar {
+            width: 260px;
+            background: rgba(15, 23, 39, .8);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-right: 1px solid var(--border);
+            padding: 28px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            flex-shrink: 0;
+        }
+
+        .logo {
             display: flex;
             align-items: center;
-            gap: 0.85rem;
+            gap: 14px;
         }
 
         .logo-icon {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            width: 42px;
-            height: 42px;
-            border-radius: var(--radius-md);
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            box-shadow: 0 0 30px rgba(124, 58, 237, .45);
             color: white;
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
-            position: relative;
         }
 
-        .logo-icon::before {
-            content: '';
-            position: absolute;
-            top: -3px;
-            left: -3px;
-            right: -3px;
-            bottom: -3px;
-            border-radius: calc(var(--radius-md) + 3px);
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            z-index: -1;
-            opacity: 0.5;
-            filter: blur(8px);
-            animation: logoPulseGlow 3s ease-in-out infinite;
-        }
-
-        @keyframes logoPulseGlow {
-            0%, 100% { opacity: 0.4; transform: scale(1); }
-            50% { opacity: 0.75; transform: scale(1.06); }
-        }
-
-        h1 {
+        .logo h1 {
             font-family: var(--font-heading);
-            font-size: 1.65rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            background: linear-gradient(135deg, #ffffff 0%, #dcd7ff 40%, #a855f7 70%, #6366f1 100%);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: shineText 6s linear infinite;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
         }
 
-        .badge-cloud {
-            display: flex;
-            align-items: center;
-            gap: 0.45rem;
-            background: rgba(16, 185, 129, 0.08);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            color: #34d399;
-            padding: 0.35rem 0.85rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.05);
-            position: relative;
+        .logo span {
+            color: #a78bfa;
         }
 
-        .badge-cloud::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            background-color: #10b981;
-            border-radius: 50%;
-            box-shadow: 0 0 8px #10b981;
-            animation: pulseDot 2s infinite;
-        }
-
-        @keyframes pulseDot {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.35); opacity: 0.45; }
-        }
-
-        main {
-            flex: 1;
-            max-width: 1280px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 1.5rem;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-        }
-
-        @media (min-width: 1024px) {
-            main {
-                grid-template-columns: 420px 1fr;
-            }
-        }
-
-        .panel {
-            background: linear-gradient(135deg, rgba(15, 20, 32, 0.75) 0%, rgba(22, 29, 47, 0.45) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
+        .nav {
             display: flex;
             flex-direction: column;
-            gap: 1.25rem;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            gap: 10px;
         }
 
-        .panel::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.25), transparent);
-            z-index: 1;
-            transition: background 0.3s ease;
-        }
-
-        .panel:hover {
-            border-color: rgba(99, 102, 241, 0.25);
-            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.05), 0 20px 50px rgba(0, 0, 0, 0.4);
-        }
-
-        .panel:hover::before {
-            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.65), rgba(168, 85, 247, 0.65), transparent);
-        }
-
-        .panel-title {
-            font-family: var(--font-heading);
-            font-size: 1.15rem;
-            font-weight: 600;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        label {
-            font-size: 0.85rem;
+        .nav a {
+            text-decoration: none;
+            color: var(--muted);
+            padding: 14px 16px;
+            border-radius: 14px;
+            transition: .3s;
             font-weight: 500;
-            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav a:hover,
+        .nav a.active {
+            background: rgba(124, 58, 237, .15);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        /* Main layout */
+        .main {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            min-width: 0;
+        }
+
+        /* Topbar header */
+        .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .topbar h2 {
+            font-family: var(--font-heading);
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .badge-cloud {
+            background: rgba(16, 185, 129, .12);
+            border: 1px solid rgba(16, 185, 129, .25);
+            color: #34d399;
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Dashboard stats section */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(15, 23, 39, .75);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .35),
+                        inset 0 1px 0 rgba(255, 255, 255, .04);
+            transition: .35s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(124, 58, 237, .35);
+        }
+
+        .stat-title {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .stat-value {
+            font-family: var(--font-heading);
+            font-size: 34px;
+            font-weight: 800;
+            margin-top: 8px;
+            color: white;
+        }
+
+        /* Content grid layout */
+        .content {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .panel {
+            background: rgba(15, 23, 39, .75);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .35),
+                        inset 0 1px 0 rgba(255, 255, 255, .04);
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .panel:hover {
+            border-color: rgba(124, 58, 237, .2);
+        }
+
+        .panel h2 {
+            font-family: var(--font-heading);
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+        }
+
+        /* Inputs and group styling */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .input-wrapper {
@@ -316,241 +271,288 @@
 
         .input-icon {
             position: absolute;
-            left: 0.75rem;
+            left: 16px;
             color: var(--text-dark);
             pointer-events: none;
             width: 18px;
             height: 18px;
         }
 
+        label {
+            font-size: 14px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
         input[type="text"],
-        input[type="password"],
         select {
             width: 100%;
-            padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-            background-color: var(--bg-surface-elevated);
+            background: var(--surface2);
             border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            color: var(--text-main);
+            height: 52px;
+            border-radius: 14px;
+            padding: 0 16px 0 44px;
+            color: white;
+            outline: none;
+            transition: .3s;
             font-family: var(--font-sans);
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
+            font-size: 14px;
         }
 
         input[type="text"]:focus,
-        input[type="password"]:focus,
         select:focus {
-            outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-glow);
+            box-shadow: 0 0 0 4px rgba(124, 58, 237, .15);
         }
 
         input::placeholder {
-            color: var(--text-muted) !important;
+            color: var(--muted) !important;
             opacity: 0.35 !important;
         }
 
-        .toggle-password {
-            position: absolute;
-            right: 0.75rem;
-            background: none;
-            border: none;
-            color: var(--text-muted);
+        /* Preset Voice Chips */
+        .chips {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            transition: .3s;
             cursor: pointer;
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 8px;
+            color: var(--muted);
+            font-weight: 500;
         }
 
-        .toggle-password:hover {
-            color: var(--text-main);
+        .chip:hover {
+            background: rgba(124, 58, 237, .15);
+            border-color: var(--primary);
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        .chip:active {
+            transform: translateY(0);
         }
 
-        /* Drag & Drop Zone */
-        .dropzone {
-            border: 2px dashed rgba(255, 255, 255, 0.08);
+        .voice-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .female-voice .voice-dot {
+            background-color: #f472b6;
+            box-shadow: 0 0 6px #f472b6;
+        }
+
+        .male-voice .voice-dot {
+            background-color: #60a5fa;
+            box-shadow: 0 0 6px #60a5fa;
+        }
+
+        /* Credits Card Panel */
+        .credits-card {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.06), rgba(99, 102, 241, 0.03));
+            border: 1px solid rgba(124, 58, 237, 0.15);
             border-radius: var(--radius-md);
-            padding: 2.25rem 1.5rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 18px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 0.75rem;
-            background-color: rgba(8, 11, 17, 0.2);
+            gap: 8px;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         }
 
-        .dropzone::before {
+        .credits-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            border-radius: var(--radius-md);
-            background: radial-gradient(circle at center, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
-            opacity: 0;
-            transition: opacity 0.25s ease;
-            pointer-events: none;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.3), transparent);
         }
 
-        .dropzone:hover::before, .dropzone.dragover::before {
-            opacity: 1;
+        .credits-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--muted);
         }
 
-        .dropzone:hover, .dropzone.dragover {
+        .credits-count {
+            font-family: var(--font-heading);
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .credits-progress-bg {
+            height: 6px;
+            width: 100%;
+            background-color: rgba(8, 11, 17, 0.5);
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            margin-top: 4px;
+        }
+
+        .credits-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            border-radius: 999px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Upload Dropzone styling */
+        .upload {
+            border: 2px dashed rgba(255, 255, 255, .1);
+            border-radius: 18px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: .3s;
+            cursor: pointer;
+            background: rgba(255, 255, 255, .02);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload:hover, .upload.dragover {
             border-color: var(--primary);
-            border-style: solid;
-            background-color: rgba(99, 102, 241, 0.03);
-            box-shadow: 0 0 25px rgba(99, 102, 241, 0.08);
-            transform: scale(1.01);
+            background: rgba(124, 58, 237, .05);
+            box-shadow: 0 0 25px rgba(124, 58, 237, 0.08);
         }
 
-        .dropzone-icon {
-            color: var(--text-dark);
-            width: 42px;
-            height: 42px;
-            transition: all 0.25s ease;
+        .upload h3 {
+            font-size: 18px;
+            color: white;
         }
 
-        .dropzone:hover .dropzone-icon, .dropzone.dragover .dropzone-icon {
-            color: var(--primary);
-            transform: translateY(-4px) scale(1.05);
-            filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.4));
-        }
-
-        .dropzone text {
-            font-size: 0.9rem;
-            color: var(--text-main);
-            font-weight: 500;
-        }
-
-        .dropzone-subtitle {
-            font-size: 0.75rem;
-            color: var(--text-muted);
+        .upload p {
+            color: var(--muted);
+            font-size: 14px;
         }
 
         .file-info {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background-color: var(--bg-surface-elevated);
-            padding: 0.75rem 1rem;
-            border-radius: var(--radius-md);
+            background-color: var(--surface2);
+            padding: 14px 18px;
+            border-radius: 14px;
             border: 1px solid var(--border);
-            font-size: 0.85rem;
+            font-size: 14px;
         }
 
         .file-info-left {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            color: var(--text-main);
+            gap: 10px;
+            color: var(--text);
         }
 
         .btn-remove-file {
             background: none;
             border: none;
-            color: var(--text-muted);
+            color: var(--muted);
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
         }
 
         .btn-remove-file:hover {
             color: var(--danger);
         }
 
-        /* Buttons */
+        /* Button styling */
         .btn {
-            width: 100%;
-            padding: 0.85rem;
-            border-radius: var(--radius-md);
-            border: 1px solid transparent;
-            font-family: var(--font-heading);
-            font-size: 0.95rem;
-            font-weight: 600;
+            height: 56px;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: .3s;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 10px 25px rgba(124, 58, 237, .35);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
-            position: relative;
-            overflow: hidden;
+            gap: 8px;
+            width: 100%;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: white;
-            border: 1px solid rgba(255,255,255,0.08);
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
+        .btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 18px 40px rgba(124, 58, 237, .5);
         }
-
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.45);
-        }
-
-        .btn-primary::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-            transform: rotate(45deg);
-            transition: 0.5s;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .btn-primary:hover:not(:disabled)::after {
-            left: 120%;
-            opacity: 1;
-            transition: all 0.6s ease;
-        }
-
-        .btn-primary:disabled {
-            background: var(--bg-surface-elevated);
-            color: var(--text-dark);
-            cursor: not-allowed;
-            box-shadow: none;
-            border: 1px solid var(--border);
-        }
-
-        .btn-secondary {
-            background-color: var(--bg-surface-elevated);
-            color: var(--text-main);
-            border: 1px solid var(--border);
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-            background-color: rgba(255,255,255,0.05);
-            border-color: rgba(99, 102, 241, 0.3);
-            color: white;
+        
+        .btn:active:not(:disabled) {
             transform: translateY(-1px);
         }
 
-        .btn-danger {
-            background-color: rgba(239, 68, 68, 0.15);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.2);
+        .btn-secondary {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            box-shadow: none;
         }
 
-        .btn-danger:hover {
-            background-color: rgba(239, 68, 68, 0.25);
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            box-shadow: none;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.25);
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.15);
+            color: white;
+        }
+
+        .btn:disabled {
+            background: var(--surface2);
+            color: var(--muted);
+            border: 1px solid var(--border);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none !important;
+            opacity: 0.6;
         }
 
         .actions-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
+            gap: 16px;
+            margin-top: 10px;
         }
 
-        /* Right Panel & Content */
+        /* Workspace and table container */
         .workspace-panel {
             min-height: 500px;
         }
@@ -561,91 +563,58 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: var(--text-muted);
-            gap: 1rem;
+            color: var(--muted);
+            gap: 16px;
             text-align: center;
-            padding: 3rem 1.5rem;
+            padding: 50px 20px;
         }
 
         .empty-state-icon {
-            width: 48px;
-            height: 48px;
+            width: 56px;
+            height: 56px;
             color: var(--text-dark);
             stroke-width: 1.5;
         }
 
-        /* Progress Card */
-        .progress-card {
-            background: linear-gradient(135deg, rgba(22, 29, 47, 0.6), rgba(15, 20, 32, 0.8));
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 1.25rem;
+        .queue-container {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 22px;
+            width: 100%;
+        }
+
+        .progress-card {
+            background: rgba(15, 23, 39, 0.4);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .progress-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.9rem;
+            font-size: 14px;
         }
 
         .progress-bar-bg {
             height: 8px;
             width: 100%;
-            background-color: var(--bg-base);
+            background-color: var(--bg);
             border-radius: 999px;
             overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.03);
+            border: 1px solid rgba(255, 255, 255, 0.02);
         }
 
         .progress-bar-fill {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
-            background-size: 200% 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
             border-radius: 999px;
             transition: width 0.3s ease;
-            animation: progressGlow 2s linear infinite;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 0.5rem;
-            text-align: center;
-        }
-
-        .stat-item {
-            background-color: rgba(8, 11, 17, 0.4);
-            padding: 0.5rem;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border);
-        }
-
-        .stat-val {
-            font-family: var(--font-heading);
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-
-        .stat-label {
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-top: 0.15rem;
-        }
-
-        /* Table & Row Queue */
-        .queue-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            overflow: hidden;
         }
 
         .queue-header {
@@ -654,94 +623,80 @@
             align-items: center;
         }
 
-        .queue-list {
-            flex: 1;
+        .queue-header span {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .queue-table-container {
+            max-height: 380px;
             overflow-y: auto;
             border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            background-color: rgba(8, 11, 17, 0.3);
-            max-height: 400px;
+            border-radius: 14px;
+            background: rgba(8, 11, 17, 0.2);
         }
 
-        /* Custom Scrollbar */
-        .queue-list::-webkit-scrollbar, .console-logs::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .queue-list::-webkit-scrollbar-track, .console-logs::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .queue-list::-webkit-scrollbar-thumb, .console-logs::-webkit-scrollbar-thumb {
-            background: var(--border-hover);
-            border-radius: 3px;
+        .table {
+            width: 100%;
+            border-collapse: collapse;
         }
 
-        .queue-item {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            align-items: center;
-            padding: 0.95rem 1.25rem;
+        .table th {
+            text-align: left;
+            color: var(--muted);
+            font-size: 13px;
+            padding: 16px 20px;
+            background: rgba(15, 23, 39, 0.6);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border);
-            gap: 1rem;
-            border-left: 3px solid transparent;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .queue-item:last-child {
-            border-bottom: none;
+        .table td {
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255, 255, 255, .05);
+            font-size: 14px;
+            vertical-align: middle;
         }
 
-        .queue-item:hover {
-            background-color: rgba(99, 102, 241, 0.03);
-            border-left-color: var(--primary);
-            transform: translateX(4px);
+        .table tr {
+            transition: .3s;
         }
 
-        .queue-item-details {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-            min-width: 0;
-        }
-
-        .queue-item-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #ffffff;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .table tr:hover {
+            background: rgba(124, 58, 237, .03);
         }
 
         .queue-item-text {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            white-space: nowrap;
+            color: var(--muted);
+            max-width: 320px;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
-        .queue-item-right {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
+        /* Status Badge */
         .badge {
-            font-size: 0.7rem;
+            font-size: 11px;
             font-weight: 600;
-            padding: 0.2rem 0.5rem;
+            padding: 4px 8px;
             border-radius: var(--radius-sm);
             text-transform: uppercase;
             letter-spacing: 0.02em;
             display: inline-flex;
             align-items: center;
-            gap: 0.25rem;
+            gap: 4px;
         }
 
         .badge-pending {
             background-color: rgba(107, 114, 128, 0.15);
-            color: var(--text-muted);
+            color: var(--muted);
             border: 1px solid rgba(107, 114, 128, 0.2);
         }
 
@@ -763,11 +718,17 @@
             border: 1px solid rgba(239, 68, 68, 0.2);
         }
 
-        /* Compact Audio Player */
+        .queue-item-right {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        /* Preview Button */
         .audio-preview-btn {
             background-color: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
-            color: var(--text-main);
+            color: var(--text);
             width: 32px;
             height: 32px;
             border-radius: 50%;
@@ -775,21 +736,87 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.2s;
         }
 
         .audio-preview-btn:hover {
             background-color: var(--primary);
             border-color: var(--primary);
             color: white;
-            transform: scale(1.05);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
         }
 
-        /* Live Console Logger */
+        /* Global Preview Audio Player */
+        .audio-player {
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .audio-player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .audio-player-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .wave {
+            height: 32px;
+            background: linear-gradient(90deg, transparent, var(--primary), var(--secondary), transparent);
+            border-radius: 8px;
+            opacity: .15;
+            transition: opacity 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+        
+        .wave.active {
+            opacity: .8;
+            animation: wavePulse 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes wavePulse {
+            0% { transform: scaleY(0.85); }
+            100% { transform: scaleY(1.15); }
+        }
+
+        .audio-progress {
+            height: 6px;
+            border-radius: 999px;
+            overflow: hidden;
+            background: #0b1020;
+            position: relative;
+        }
+        
+        .audio-progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 999px;
+            transition: width 0.1s linear;
+        }
+
+        /* High-Tech Terminal Console */
         .console-panel {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 10px;
+            margin-top: 10px;
         }
 
         .console-header {
@@ -798,19 +825,27 @@
             align-items: center;
         }
 
+        .console-header span {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
         .console-logs {
             background-color: #03050a;
             border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: var(--radius-md);
-            padding: 0.85rem 1.15rem;
+            border-radius: 14px;
+            padding: 14px 18px;
             font-family: var(--font-mono);
-            font-size: 0.75rem;
+            font-size: 12px;
             color: #34d399; /* bright emerald */
-            max-height: 140px;
+            max-height: 120px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 0.35rem;
+            gap: 6px;
             position: relative;
             box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
         }
@@ -831,11 +866,12 @@
         .log-entry {
             line-height: 1.4;
             letter-spacing: 0.01em;
+            z-index: 3;
         }
 
         .log-time {
             color: var(--text-dark);
-            margin-right: 0.5rem;
+            margin-right: 8px;
         }
 
         .log-err {
@@ -850,120 +886,35 @@
 
         footer {
             text-align: center;
-            padding: 2rem 1.5rem;
-            font-size: 0.75rem;
+            padding: 30px;
+            font-size: 12px;
             color: var(--text-dark);
             border-top: 1px solid var(--border);
-            margin-top: 5rem;
+            margin-top: 50px;
             background: rgba(8, 11, 17, 0.5);
             backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
-        /* Voice Preset Chips */
-        .voice-chip {
-            font-size: 0.72rem;
-            font-weight: 500;
-            background-color: var(--bg-surface-elevated);
-            color: var(--text-muted);
-            padding: 0.25rem 0.6rem;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            border: 1px solid var(--border);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            gap: 0.35rem;
-        }
-
-        .voice-chip:hover {
-            color: white;
-            border-color: var(--primary);
-            background-color: rgba(99, 102, 241, 0.1);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.15);
-        }
-
-        .voice-chip:active {
-            transform: translateY(0);
-        }
-
-        .voice-dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            display: inline-block;
+        /* Scrollbar customizing */
+        .queue-table-container::-webkit-scrollbar,
+        .console-logs::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
         
-        .female-voice .voice-dot {
-            background-color: #f472b6;
-            box-shadow: 0 0 6px #f472b6;
+        .queue-table-container::-webkit-scrollbar-track,
+        .console-logs::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .queue-table-container::-webkit-scrollbar-thumb,
+        .console-logs::-webkit-scrollbar-thumb {
+            background: var(--border-hover);
+            border-radius: 3px;
         }
 
-        .male-voice .voice-dot {
-            background-color: #60a5fa;
-            box-shadow: 0 0 6px #60a5fa;
-        }
-
-        /* Credits Display Card */
-        .credits-card {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(168, 85, 247, 0.03));
-            border: 1px solid rgba(99, 102, 241, 0.15);
-            border-radius: var(--radius-md);
-            padding: 0.85rem 1rem;
-            display: block;
-            margin-top: 0.75rem;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .credits-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3), transparent);
-        }
-
-        .credits-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            margin-bottom: 0.4rem;
-        }
-
-        .credits-count {
-            font-family: var(--font-heading);
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: #ffffff;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
-        }
-
-        .credits-progress-bg {
-            height: 5px;
-            width: 100%;
-            background-color: rgba(8, 11, 17, 0.5);
-            border-radius: 999px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.02);
-            margin-top: 0.4rem;
-        }
-
-        .credits-progress-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, var(--accent), var(--primary));
-            border-radius: 999px;
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Spinner for loading state */
+        /* Loading Spinner */
         .spin {
             animation: spinning 1s linear infinite;
         }
@@ -972,190 +923,262 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+
+        /* Responsive Layout */
+        @media(max-width: 1200px) {
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media(max-width: 900px) {
+            .sidebar {
+                display: none;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .main {
+                padding: 20px;
+            }
+        }
     </style>
 </head>
+
 <body>
-    <div class="ambient-glow-1"></div>
-    <div class="ambient-glow-2"></div>
-
-    <header>
-        <div class="logo-container">
-            <div class="logo-icon">
-                <i data-lucide="audio-lines"></i>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">♫</div>
+                <h1>Metabook <span>VO</span></h1>
             </div>
-            <div>
-                <h1>Metabook VO Generator</h1>
-            </div>
-        </div>
-        <div class="badge-cloud">
-            <i data-lucide="server" style="width: 12px; height: 12px;"></i>
-            Vercel Ready
-        </div>
-    </header>
+            <nav class="nav">
+                <a href="#" class="active"><i data-lucide="layout-dashboard" style="width: 18px; height: 18px;"></i>Dashboard</a>
+                <a href="#"><i data-lucide="folder-kanban" style="width: 18px; height: 18px;"></i>Projects</a>
+                <a href="#"><i data-lucide="mic" style="width: 18px; height: 18px;"></i>Voices</a>
+                <a href="#"><i data-lucide="history" style="width: 18px; height: 18px;"></i>History</a>
+                <a href="#"><i data-lucide="key" style="width: 18px; height: 18px;"></i>API Keys</a>
+                <a href="#"><i data-lucide="credit-card" style="width: 18px; height: 18px;"></i>Billing</a>
+                <a href="#"><i data-lucide="settings" style="width: 18px; height: 18px;"></i>Settings</a>
+            </nav>
+        </aside>
 
-    <main>
-        <!-- Configuration Panel -->
-        <div class="panel">
-            <div class="panel-title">
-                <i data-lucide="settings" style="width: 18px; height: 18px; color: var(--primary);"></i>
-                Configuration
-            </div>
-
-            <!-- Credentials & Model Settings -->
-
-            <div class="form-group">
-                <label for="voice_id">Voice ID</label>
-                <div class="input-wrapper">
-                    <i data-lucide="mic" class="input-icon"></i>
-                    <input type="text" id="voice_id" placeholder="Enter Voice ID" value="">
-                </div>
-                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.35rem;">
-                    <span class="voice-chip female-voice" onclick="setVoice('21m00Tcm4TlvDq8ikWAM')"><span class="voice-dot"></span>Rachel (Female)</span>
-                    <span class="voice-chip female-voice" onclick="setVoice('AZnzlk1XvdvUeBnXmlld')"><span class="voice-dot"></span>Domi (Female)</span>
-                    <span class="voice-chip male-voice" onclick="setVoice('ErXwobaYiN019PkySvjV')"><span class="voice-dot"></span>Antoni (Male)</span>
+        <!-- Main Workspace -->
+        <main class="main">
+            <!-- Top bar -->
+            <div class="topbar">
+                <h2>Voice Generation Dashboard</h2>
+                <div class="badge-cloud">
+                    <i data-lucide="server" style="width: 12px; height: 12px;"></i>
+                    Vercel Ready
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="model_id">Model ID</label>
-                <div class="input-wrapper">
-                    <i data-lucide="cpu" class="input-icon"></i>
-                    <select id="model_id">
-                        <option value="eleven_multilingual_v2" selected>eleven_multilingual_v2 (Recommended)</option>
-                        <option value="eleven_monolingual_v1">eleven_monolingual_v1</option>
-                        <option value="eleven_turbo_v2">eleven_turbo_v2 (Faster/Cheaper)</option>
-                    </select>
+            <!-- Stats -->
+            <section class="stats">
+                <div class="card">
+                    <div class="stat-title">Total Rows</div>
+                    <div class="stat-value" id="stat_total">0</div>
                 </div>
-            </div>
 
-            <!-- Credits Card -->
-            <div class="credits-card" id="credits_card">
-                <div class="credits-info">
-                    <div style="display: flex; align-items: center; gap: 0.35rem;">
-                        <i data-lucide="sparkles" style="width: 12px; height: 12px; color: var(--accent);"></i>
-                        <span>Remaining Characters</span>
-                    </div>
-                    <span id="credits_limit_label" style="font-size: 0.65rem; color: var(--text-dark);">Limit: <span id="credits_limit">Loading...</span></span>
+                <div class="card">
+                    <div class="stat-title">Done</div>
+                    <div class="stat-value" id="stat_done" style="color: var(--success);">0</div>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.35rem;">
-                    <div class="credits-count" id="credits_left">Loading...</div>
-                    <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 500;">credits</span>
+
+                <div class="card">
+                    <div class="stat-title">Pending</div>
+                    <div class="stat-value" id="stat_pending">0</div>
                 </div>
-                <div class="credits-progress-bg">
-                    <div class="credits-progress-fill" id="credits_progress"></div>
+
+                <div class="card">
+                    <div class="stat-title">Failed</div>
+                    <div class="stat-value" id="stat_failed" style="color: var(--danger);">0</div>
                 </div>
-            </div>
+            </section>
 
-            <div style="border-top: 1px solid var(--border); margin: 0.5rem 0;"></div>
+            <!-- Columns Layout -->
+            <section class="content">
+                <!-- Left Panel: Configuration -->
+                <div class="panel">
+                    <h2><i data-lucide="settings" style="width: 20px; height: 20px; color: var(--primary);"></i>Configuration</h2>
 
-            <!-- CSV Upload Panel -->
-            <div class="panel-title">
-                <i data-lucide="file-spreadsheet" style="width: 18px; height: 18px; color: var(--accent);"></i>
-                Upload Script (CSV)
-            </div>
-
-            <!-- Upload Dropzone -->
-            <div class="dropzone" id="dropzone">
-                <i data-lucide="upload-cloud" class="dropzone-icon"></i>
-                <text>Drag and drop your script file here</text>
-                <span class="dropzone-subtitle">Supports .csv (headers: filename, text)</span>
-                <input type="file" id="file_input" accept=".csv" style="display: none;">
-            </div>
-
-            <!-- Loaded File Info -->
-            <div class="file-info" id="file_info_box" style="display: none;">
-                <div class="file-info-left">
-                    <i data-lucide="file" style="color: var(--primary); width: 16px; height: 16px;"></i>
-                    <span id="file_name" style="font-weight: 500;">script.csv</span>
-                    <span id="file_size" style="color: var(--text-muted); font-size: 0.75rem;">(1.2 KB)</span>
-                </div>
-                <button class="btn-remove-file" id="btn_remove_file" title="Remove script">
-                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-                </button>
-            </div>
-
-            <button class="btn btn-primary" id="btn_start" disabled>
-                <i data-lucide="play" style="width: 18px; height: 18px;"></i>
-                Generate Audio files
-            </button>
-        </div>
-
-        <!-- Workspace Panel (Right) -->
-        <div class="panel workspace-panel">
-            <!-- Empty State -->
-            <div class="empty-state" id="empty_state">
-                <i data-lucide="audio-lines" class="empty-state-icon"></i>
-                <div>
-                    <h3 style="color: white; font-family: var(--font-heading); margin-bottom: 0.25rem;">No script loaded</h3>
-                    <p style="font-size: 0.85rem;">Upload a CSV file to parse the voiceover rows and start generating audio.</p>
-                </div>
-            </div>
-
-            <!-- Active Workspace (Queue, Progress, Actions) -->
-            <div class="queue-container" id="active_workspace" style="display: none;">
-                <!-- Progress Card -->
-                <div class="progress-card">
-                    <div class="progress-info">
-                        <span style="font-weight: 600;" id="progress_status">Ready to generate</span>
-                        <span id="progress_percent" style="font-weight: 500; font-family: var(--font-mono);">0%</span>
-                    </div>
-                    <div class="progress-bar-bg">
-                        <div class="progress-bar-fill" id="progress_bar"></div>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-val" id="stat_total">0</div>
-                            <div class="stat-label">Total</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-val" id="stat_done" style="color: var(--success);">0</div>
-                            <div class="stat-label">Done</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-val" id="stat_pending" style="color: var(--text-muted);">0</div>
-                            <div class="stat-label">Pending</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-val" id="stat_failed" style="color: var(--danger);">0</div>
-                            <div class="stat-label">Failed</div>
+                    <div class="input-group">
+                        <label for="voice_id">Voice ID</label>
+                        <div class="input-wrapper">
+                            <i data-lucide="mic" class="input-icon"></i>
+                            <input type="text" id="voice_id" placeholder="Enter voice ID" value="">
                         </div>
                     </div>
-                </div>
 
-                <!-- Action Toolbar -->
-                <div class="actions-row">
-                    <button class="btn btn-secondary" id="btn_control" disabled>
-                        <i data-lucide="play" style="width: 16px; height: 16px;"></i>
-                        Start Generation
-                    </button>
-                    <button class="btn btn-primary" id="btn_zip" disabled>
-                        <i data-lucide="download" style="width: 16px; height: 16px;"></i>
-                        Download ZIP
+                    <div class="chips">
+                        <div class="chip female-voice" onclick="setVoice('21m00Tcm4TlvDq8ikWAM')">
+                            <span class="voice-dot"></span>Rachel
+                        </div>
+                        <div class="chip female-voice" onclick="setVoice('AZnzlk1XvdvUeBnXmlld')">
+                            <span class="voice-dot"></span>Domi
+                        </div>
+                        <div class="chip male-voice" onclick="setVoice('ErXwobaYiN019PkySvjV')">
+                            <span class="voice-dot"></span>Antoni
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="model_id">Model ID</label>
+                        <div class="input-wrapper">
+                            <i data-lucide="cpu" class="input-icon"></i>
+                            <select id="model_id">
+                                <option value="eleven_multilingual_v2" selected>eleven_multilingual_v2 (Recommended)</option>
+                                <option value="eleven_monolingual_v1">eleven_monolingual_v1</option>
+                                <option value="eleven_turbo_v2">eleven_turbo_v2 (Faster/Cheaper)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Credits card -->
+                    <div class="credits-card" id="credits_card">
+                        <div class="credits-info">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <i data-lucide="sparkles" style="width: 14px; height: 14px; color: var(--secondary);"></i>
+                                <span>Remaining Credits</span>
+                            </div>
+                            <span id="credits_limit_label" style="font-size: 11px; color: var(--text-dark);">Limit: <span id="credits_limit">Loading...</span></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                            <div class="credits-count" id="credits_left">Loading...</div>
+                            <span style="font-size: 11px; color: var(--muted); font-weight: 500;">characters</span>
+                        </div>
+                        <div class="credits-progress-bg">
+                            <div class="credits-progress-fill" id="credits_progress"></div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--border); margin: 5px 0;"></div>
+
+                    <!-- Upload dropzone -->
+                    <div class="upload" id="dropzone">
+                        <i data-lucide="upload-cloud" style="width: 42px; height: 42px; color: var(--primary);"></i>
+                        <h3>Upload CSV</h3>
+                        <p>Drag & drop your script file</p>
+                        <span style="font-size: 11px; color: var(--text-dark);">Requires .csv with filename & text headers</span>
+                        <input type="file" id="file_input" accept=".csv" style="display: none;">
+                    </div>
+
+                    <!-- Loaded File details -->
+                    <div class="file-info" id="file_info_box" style="display: none;">
+                        <div class="file-info-left">
+                            <i data-lucide="file-text" style="color: var(--primary); width: 16px; height: 16px;"></i>
+                            <span id="file_name" style="font-weight: 500;">script.csv</span>
+                            <span id="file_size" style="color: var(--muted); font-size: 11px;">(0 KB)</span>
+                        </div>
+                        <button class="btn-remove-file" id="btn_remove_file" title="Remove script">
+                            <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                        </button>
+                    </div>
+
+                    <button class="btn" id="btn_start" disabled>
+                        <i data-lucide="play" style="width: 18px; height: 18px;"></i>
+                        Generate Audio Files
                     </button>
                 </div>
 
-                <!-- Queue List -->
-                <div class="queue-header">
-                    <span style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Voiceover Items</span>
-                    <span id="row_count" style="font-size: 0.8rem; color: var(--text-dark);">0 items loaded</span>
-                </div>
-                <div class="queue-list" id="queue_list">
-                    <!-- Dynamic items go here -->
-                </div>
+                <!-- Right Panel: Script Preview / Workspace -->
+                <div class="panel workspace-panel">
+                    <h2><i data-lucide="file-audio" style="width: 20px; height: 20px; color: var(--secondary);"></i>Script Preview</h2>
 
-                <!-- Console Panel -->
-                <div class="console-panel">
-                    <div class="console-header">
-                        <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Console Logs</span>
-                        <span style="font-size: 0.7rem; color: var(--primary); cursor: pointer;" onclick="clearLogs()">Clear Logs</span>
+                    <!-- Empty State -->
+                    <div class="empty-state" id="empty_state">
+                        <i data-lucide="music" class="empty-state-icon"></i>
+                        <div>
+                            <h3 style="color: white; font-family: var(--font-heading); margin-bottom: 6px;">No script loaded</h3>
+                            <p style="font-size: 14px;">Upload a CSV script file on the left configuration panel to view items and start voiceover generation.</p>
+                        </div>
                     </div>
-                    <div class="console-logs" id="console_logs">
-                        <div class="log-entry"><span class="log-time">--:--:--</span>System initialized. Awaiting CSV file.</div>
+
+                    <!-- Active Workspace -->
+                    <div class="queue-container" id="active_workspace" style="display: none;">
+                        <!-- Progress Card -->
+                        <div class="progress-card">
+                            <div class="progress-info">
+                                <span style="font-weight: 600;" id="progress_status">Ready to generate</span>
+                                <span id="progress_percent" style="font-weight: 500; font-family: var(--font-mono);">0%</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" id="progress_bar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Actions row -->
+                        <div class="actions-row">
+                            <button class="btn btn-secondary" id="btn_control" disabled>
+                                <i data-lucide="play" style="width: 16px; height: 16px;"></i>
+                                Start Generation
+                            </button>
+                            <button class="btn btn-primary" id="btn_zip" disabled>
+                                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                Download ZIP
+                            </button>
+                        </div>
+
+                        <!-- Queue list header -->
+                        <div class="queue-header">
+                            <span>Script Items</span>
+                            <span id="row_count" style="font-size: 12px; color: var(--text-dark);">0 items loaded</span>
+                        </div>
+
+                        <!-- Queue Table Container -->
+                        <div class="queue-table-container" id="queue_table_container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Filename</th>
+                                        <th>Preview Text</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="queue_list">
+                                    <!-- Dynamic items go here -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Global Audio Preview Player -->
+                        <div class="audio-player" id="global_audio_player">
+                            <div class="audio-player-header">
+                                <span class="audio-player-title">
+                                    <i data-lucide="volume-2" style="width: 16px; height: 16px; color: var(--primary);"></i>
+                                    <span id="global_preview_title">No audio playing</span>
+                                </span>
+                            </div>
+                            <div class="wave" id="global_preview_wave"></div>
+                            <div class="audio-progress">
+                                <div class="audio-progress-fill" id="global_preview_progress_fill"></div>
+                            </div>
+                        </div>
+
+                        <!-- Console panel -->
+                        <div class="console-panel">
+                            <div class="console-header">
+                                <span>Console Logs</span>
+                                <span style="font-size: 11px; color: var(--primary); cursor: pointer;" onclick="clearLogs()">Clear Logs</span>
+                            </div>
+                            <div class="console-logs" id="console_logs">
+                                <div class="log-entry"><span class="log-time">--:--:--</span>System initialized. Awaiting CSV file.</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </main>
+            </section>
+        </main>
+    </div>
 
     <footer>
         Metabook VO Generator | Powered by Vercel & Client-Side Javascript
@@ -1235,7 +1258,7 @@
                     
                     const leftEl = document.getElementById('credits_left');
                     leftEl.textContent = remaining.toLocaleString();
-                    leftEl.style.fontSize = "1.05rem"; // restore default size
+                    leftEl.style.fontSize = "20px"; // restore default size
                     leftEl.style.color = "#ffffff";    // restore default white
                     document.getElementById('credits_limit').textContent = limit.toLocaleString();
                     document.getElementById('credits_progress').style.width = `${percent}%`;
@@ -1257,7 +1280,7 @@
                     console.error("Failed to fetch credits:", response.statusText);
                     const leftEl = document.getElementById('credits_left');
                     leftEl.textContent = errMsg;
-                    leftEl.style.fontSize = "0.75rem"; // smaller font size to fit error message
+                    leftEl.style.fontSize = "13px"; // smaller font size to fit error message
                     leftEl.style.color = "#f87171";    // error red color
                     document.getElementById('credits_limit').textContent = "N/A";
                     document.getElementById('credits_progress').style.width = "0%";
@@ -1266,7 +1289,7 @@
                 console.error("Error fetching credits:", err);
                 const leftEl = document.getElementById('credits_left');
                 leftEl.textContent = "Error";
-                leftEl.style.fontSize = "1.05rem";
+                leftEl.style.fontSize = "20px";
                 leftEl.style.color = "#f87171";
                 document.getElementById('credits_limit').textContent = "N/A";
                 document.getElementById('credits_progress').style.width = "0%";
@@ -1405,6 +1428,7 @@
             
             btnStart.disabled = false;
             btnControl.disabled = false;
+            btnControl.className = 'btn btn-secondary';
             btnControl.innerHTML = '<i data-lucide="play" style="width: 16px; height: 16px;"></i>Start Generation';
             btnZip.disabled = true;
 
@@ -1413,14 +1437,13 @@
             lucide.createIcons();
         }
 
-        // Render queue rows
+        // Render queue rows in table
         function renderQueue() {
             queueList.innerHTML = '';
             parsedRows.forEach((row, index) => {
                 const status = rowStatuses[index];
-                const item = document.createElement('div');
-                item.className = 'queue-item';
-                item.id = `queue-row-${index}`;
+                const tr = document.createElement('tr');
+                tr.id = `queue-row-${index}`;
                 
                 let badgeClass = 'badge-pending';
                 let statusText = 'Pending';
@@ -1440,24 +1463,26 @@
                     badgeIcon = 'alert-triangle';
                 }
 
-                item.innerHTML = `
-                    <div class="queue-item-details">
-                        <div class="queue-item-title">${row.filename || `Row ${index + 1}`}</div>
-                        <div class="queue-item-text" title="${row.text}">${row.text}</div>
-                    </div>
-                    <div class="queue-item-right">
+                tr.innerHTML = `
+                    <td style="font-weight: 600; color: white;">${row.filename || `Row ${index + 1}`}</td>
+                    <td class="queue-item-text" title="${row.text}">${row.text}</td>
+                    <td>
                         <span class="badge ${badgeClass}">
                             <i data-lucide="${badgeIcon}" style="width: 12px; height: 12px;"></i>
                             ${statusText}
                         </span>
-                        ${status === 'success' ? `
-                            <button class="audio-preview-btn" onclick="playPreview(${index})" id="play-btn-${index}" title="Play preview">
-                                <i data-lucide="play" style="width: 14px; height: 14px;"></i>
-                            </button>
-                        ` : ''}
-                    </div>
+                    </td>
+                    <td>
+                        <div class="queue-item-right">
+                            ${status === 'success' ? `
+                                <button class="audio-preview-btn" onclick="playPreview(${index})" id="play-btn-${index}" title="Play preview">
+                                    <i data-lucide="play" style="width: 14px; height: 14px;"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
                 `;
-                queueList.appendChild(item);
+                queueList.appendChild(tr);
             });
             lucide.createIcons();
         }
@@ -1486,8 +1511,8 @@
             const done = rowStatuses.filter(s => s === 'success').length;
             const failed = rowStatuses.filter(s => s === 'error').length;
             const pending = rowStatuses.filter(s => s === 'pending').length;
-            const generating = rowStatuses.filter(s => s === 'generating').length;
 
+            statTotal.textContent = total;
             statDone.textContent = done;
             statFailed.textContent = failed;
             statPending.textContent = pending;
@@ -1500,7 +1525,7 @@
                 progressStatus.textContent = `Generating audio... (${done + failed}/${total})`;
             } else if (isPaused) {
                 progressStatus.textContent = `Paused (${done + failed}/${total})`;
-            } else if (done === total) {
+            } else if (done === total && total > 0) {
                 progressStatus.textContent = `Completed! ${done} generated successfully.`;
             } else if (done + failed > 0) {
                 progressStatus.textContent = `Stopped. ${done} successful, ${failed} failed.`;
@@ -1529,6 +1554,16 @@
             
             emptyState.style.display = 'flex';
             activeWorkspace.style.display = 'none';
+
+            statTotal.textContent = '0';
+            statDone.textContent = '0';
+            statPending.textContent = '0';
+            statFailed.textContent = '0';
+            
+            // Reset global audio player
+            document.getElementById('global_preview_title').textContent = "No audio playing";
+            document.getElementById('global_preview_wave').classList.remove('active');
+            document.getElementById('global_preview_progress_fill').style.width = "0%";
         }
 
         // Start Generation Button handlers
@@ -1550,6 +1585,7 @@
         function pauseBatchGeneration() {
             isGenerating = false;
             isPaused = true;
+            btnControl.className = 'btn btn-secondary';
             btnControl.innerHTML = '<i data-lucide="play" style="width: 16px; height: 16px;"></i>Resume';
             btnStart.disabled = false;
             updateProgress();
@@ -1573,9 +1609,8 @@
             isPaused = false;
             btnStart.disabled = true;
             btnControl.disabled = false;
+            btnControl.className = 'btn btn-danger';
             btnControl.innerHTML = '<i data-lucide="pause" style="width: 16px; height: 16px;"></i>Pause';
-            btnControl.classList.remove('btn-secondary');
-            btnControl.classList.add('btn-danger');
             
             addLog("Starting batch generation queue...");
             lucide.createIcons();
@@ -1598,8 +1633,7 @@
 
             // End of loop checks
             isGenerating = false;
-            btnControl.classList.remove('btn-danger');
-            btnControl.classList.add('btn-secondary');
+            btnControl.className = 'btn btn-secondary';
             btnStart.disabled = false;
 
             if (activeIndex >= parsedRows.length) {
@@ -1671,12 +1705,12 @@
 
         // Dynamically update UI of a specific queue row
         function updateRowUI(index) {
-            const item = document.getElementById(`queue-row-${index}`);
-            if (!item) return;
+            const tr = document.getElementById(`queue-row-${index}`);
+            if (!tr) return;
 
             const status = rowStatuses[index];
-            const rightDiv = item.querySelector('.queue-item-right');
-            const badgeSpan = rightDiv.querySelector('.badge');
+            const badgeSpan = tr.querySelector('.badge');
+            const rightDiv = tr.querySelector('.queue-item-right');
 
             // Remove existing badge classes
             badgeSpan.className = 'badge';
@@ -1728,6 +1762,10 @@
             const btn = document.getElementById(`play-btn-${index}`);
             if (!audio || !btn) return;
 
+            const globalTitle = document.getElementById('global_preview_title');
+            const globalWave = document.getElementById('global_preview_wave');
+            const globalProgressFill = document.getElementById('global_preview_progress_fill');
+
             // Pause other playing audios
             Object.keys(audioElements).forEach(idx => {
                 if (parseInt(idx) !== index && !audioElements[idx].paused) {
@@ -1742,13 +1780,30 @@
             if (audio.paused) {
                 audio.play();
                 btn.innerHTML = '<i data-lucide="pause" style="width: 14px; height: 14px;"></i>';
+                
+                // Update global player
+                globalTitle.textContent = `Playing: ${parsedRows[index].filename}.mp3`;
+                globalWave.classList.add('active');
+                
+                audio.ontimeupdate = () => {
+                    if (audio.duration) {
+                        const percent = (audio.currentTime / audio.duration) * 100;
+                        globalProgressFill.style.width = `${percent}%`;
+                    }
+                };
+
                 audio.onended = () => {
                     btn.innerHTML = '<i data-lucide="play" style="width: 14px; height: 14px;"></i>';
+                    globalTitle.textContent = "No audio playing";
+                    globalWave.classList.remove('active');
+                    globalProgressFill.style.width = "0%";
                     lucide.createIcons();
                 };
             } else {
                 audio.pause();
                 btn.innerHTML = '<i data-lucide="play" style="width: 14px; height: 14px;"></i>';
+                globalTitle.textContent = "Paused";
+                globalWave.classList.remove('active');
             }
             lucide.createIcons();
         }
