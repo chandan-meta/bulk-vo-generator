@@ -681,7 +681,7 @@
                 </label>
                 <div class="input-wrapper">
                     <i data-lucide="key" class="input-icon"></i>
-                    <input type="password" id="api_key" placeholder="Enter your ElevenLabs API key">
+                    <input type="password" id="api_key" placeholder="Enter your ElevenLabs API key" value="5e11351c759ab90d47805d7c58a4d6f43c7bbfc33cfe108b7c6e5f986ff4ad5e">
                     <button class="toggle-password" id="toggle_api_key_visibility" type="button" tabindex="-1">
                         <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
                     </button>
@@ -692,7 +692,7 @@
                 <label for="voice_id">Voice ID</label>
                 <div class="input-wrapper">
                     <i data-lucide="mic" class="input-icon"></i>
-                    <input type="text" id="voice_id" placeholder="e.g. 21m00Tcm4TlvDq8ikWAM" value="21m00Tcm4TlvDq8ikWAM">
+                    <input type="text" id="voice_id" placeholder="Enter Voice ID" value="">
                 </div>
                 <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.25rem;">
                     <span style="font-size: 0.7rem; background-color: var(--bg-surface-elevated); padding: 0.15rem 0.35rem; border-radius: 4px; cursor: pointer; border: 1px solid var(--border);" onclick="setVoice('21m00Tcm4TlvDq8ikWAM')">Rachel (Female)</span>
@@ -876,8 +876,11 @@
             const savedApiKey = localStorage.getItem('elevenlabs_api_key');
             const savedVoiceId = localStorage.getItem('elevenlabs_voice_id');
             const savedModelId = localStorage.getItem('elevenlabs_model_id');
-            if (savedApiKey) apiKeyInput.value = savedApiKey;
-            if (savedVoiceId) voiceIdInput.value = savedVoiceId;
+            
+            // Default to hardcoded API key if none is saved locally
+            apiKeyInput.value = savedApiKey || "5e11351c759ab90d47805d7c58a4d6f43c7bbfc33cfe108b7c6e5f986ff4ad5e";
+            // Default to empty Voice ID to prompt input
+            voiceIdInput.value = savedVoiceId || "";
             if (savedModelId) modelIdSelect.value = savedModelId;
         });
 
