@@ -18,12 +18,14 @@ def api_subscription():
     }
     try:
         response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            return response.json(), 200
-        else:
-            return {"error": response.text}, response.status_code
+        try:
+            data = response.json()
+        except:
+            data = {"detail": {"message": response.text}}
+        return data, response.status_code
     except Exception as e:
-        return {"error": str(e)}, 500
+        return {"detail": {"message": str(e)}}, 500
+
 
 
 @app.route('/generate', methods=['POST'])
