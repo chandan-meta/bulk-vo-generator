@@ -5,13 +5,15 @@ import os
 
 app = Flask(__name__, template_folder='.')
 
+SECRET_API_KEY = "sk_89a5b1f9a4fa5a31301a9f9daf76c054ec1d19934dd6c0e7"
+
 @app.route('/')
 def home():
     return render_template('index.html')
 
 @app.route('/api/subscription')
 def api_subscription():
-    api_key = request.headers.get("xi-api-key") or request.args.get("api_key") or "f415bd8d33c459f6d4e218fa9c55383f59384bc88906fce44dfa98c032d2ce34"
+    api_key = request.headers.get("xi-api-key") or request.args.get("api_key") or SECRET_API_KEY
     url = "https://api.elevenlabs.io/v1/user/subscription"
     headers = {
         "xi-api-key": api_key
@@ -30,7 +32,7 @@ def api_subscription():
 def generate():
     csv_file = request.files['csv_file']
     output_folder = request.form['output_folder']
-    api_key = request.form.get('api_key') or "f415bd8d33c459f6d4e218fa9c55383f59384bc88906fce44dfa98c032d2ce34"
+    api_key = request.form.get('api_key') or SECRET_API_KEY
     voice_id = request.form['voice_id']
 
     os.makedirs(output_folder, exist_ok=True)

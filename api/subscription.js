@@ -1,4 +1,4 @@
-const ELEVENLABS_API_KEY = "f415bd8d33c459f6d4e218fa9c55383f59384bc88906fce44dfa98c032d2ce34";
+const ELEVENLABS_API_KEY = "sk_89a5b1f9a4fa5a31301a9f9daf76c054ec1d19934dd6c0e7";
 
 export default async function handler(req, res) {
     try {

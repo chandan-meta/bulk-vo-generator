@@ -1011,14 +1011,6 @@
                     <h2><i data-lucide="settings" style="width: 20px; height: 20px; color: var(--primary);"></i>Configuration</h2>
 
                     <div class="input-group">
-                        <label for="api_key">API Key <span style="font-size: 11px; opacity: 0.6; font-weight: normal;">(Secret key starts with sk_)</span></label>
-                        <div class="input-wrapper">
-                            <i data-lucide="key" class="input-icon"></i>
-                            <input type="password" id="api_key" placeholder="Enter API Key (sk_...)" value="">
-                        </div>
-                    </div>
-
-                    <div class="input-group">
                         <label for="voice_id">Voice ID</label>
                         <div class="input-wrapper">
                             <i data-lucide="mic" class="input-icon"></i>
@@ -1193,11 +1185,10 @@
     </footer>
 
     <script>
-        // ElevenLabs Default API Credentials
-        const ELEVENLABS_API_KEY = "f415bd8d33c459f6d4e218fa9c55383f59384bc88906fce44dfa98c032d2ce34";
+        // ElevenLabs Secret API Credentials
+        const ELEVENLABS_API_KEY = "sk_89a5b1f9a4fa5a31301a9f9daf76c054ec1d19934dd6c0e7";
 
         // DOM Elements
-        const apiKeyInput = document.getElementById('api_key');
         const voiceIdInput = document.getElementById('voice_id');
         const modelIdSelect = document.getElementById('model_id');
         const dropzone = document.getElementById('dropzone');
@@ -1239,8 +1230,7 @@
 
         // Get currently active API key
         function getApiKey() {
-            const val = apiKeyInput ? apiKeyInput.value.trim() : '';
-            return val || ELEVENLABS_API_KEY;
+            return ELEVENLABS_API_KEY;
         }
 
         // Fetch ElevenLabs credits status
@@ -1316,10 +1306,8 @@
 
         // Retrieve saved credentials on load
         window.addEventListener('load', () => {
-            const savedApiKey = localStorage.getItem('elevenlabs_api_key');
             const savedModelId = localStorage.getItem('elevenlabs_model_id');
             
-            if (savedApiKey) apiKeyInput.value = savedApiKey;
             voiceIdInput.value = "";
             if (savedModelId) modelIdSelect.value = savedModelId;
             
@@ -1329,7 +1317,6 @@
 
         // Save credentials helper
         function saveCredentials() {
-            localStorage.setItem('elevenlabs_api_key', apiKeyInput.value.trim());
             localStorage.setItem('elevenlabs_voice_id', voiceIdInput.value.trim());
             localStorage.setItem('elevenlabs_model_id', modelIdSelect.value);
         }
@@ -1342,10 +1329,6 @@
         }
 
         // Handle inputs changes to save credentials
-        apiKeyInput.addEventListener('input', () => {
-            saveCredentials();
-            fetchRemainingCredits();
-        });
         voiceIdInput.addEventListener('input', saveCredentials);
         modelIdSelect.addEventListener('change', saveCredentials);
 
