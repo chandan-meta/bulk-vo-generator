@@ -11,7 +11,7 @@ def home():
 
 @app.route('/api/subscription')
 def api_subscription():
-    api_key = "5e11351c759ab90d47805d7c58a4d6f43c7bbfc33cfe108b7c6e5f986ff4ad5e"
+    api_key = request.headers.get("xi-api-key") or request.args.get("api_key") or "f415bd8d33c459f6d4e218fa9c55383f59384bc88906fce44dfa98c032d2ce34"
     url = "https://api.elevenlabs.io/v1/user/subscription"
     headers = {
         "xi-api-key": api_key
@@ -26,14 +26,11 @@ def api_subscription():
     except Exception as e:
         return {"detail": {"message": str(e)}}, 500
 
-
-
 @app.route('/generate', methods=['POST'])
 def generate():
-
     csv_file = request.files['csv_file']
     output_folder = request.form['output_folder']
-    api_key = request.form['api_key']
+    api_key = request.form.get('api_key') or "f415bd8d33c459f6d4e218fa9c55383f59384bc88906fce44dfa98c032d2ce34"
     voice_id = request.form['voice_id']
 
     os.makedirs(output_folder, exist_ok=True)
@@ -53,7 +50,6 @@ def generate():
         reader = csv.DictReader(file)
 
         for row in reader:
-
             filename = row["filename"]
             text = row["text"]
 
@@ -65,7 +61,6 @@ def generate():
             response = requests.post(url, json=data, headers=headers)
 
             if response.status_code == 200:
-
                 output_path = os.path.join(output_folder, f"{filename}.mp3")
 
                 with open(output_path, "wb") as f:

@@ -1,11 +1,12 @@
-const ELEVENLABS_API_KEY = "5e11351c759ab90d47805d7c58a4d6f43c7bbfc33cfe108b7c6e5f986ff4ad5e";
+const ELEVENLABS_API_KEY = "f415bd8d33c459f6d4e218fa9c55383f59384bc88906fce44dfa98c032d2ce34";
 
 export default async function handler(req, res) {
     try {
+        const apiKey = req.headers['xi-api-key'] || req.query.api_key || ELEVENLABS_API_KEY;
         const response = await fetch("https://api.elevenlabs.io/v1/user/subscription", {
             method: "GET",
             headers: {
-                "xi-api-key": ELEVENLABS_API_KEY
+                "xi-api-key": apiKey
             }
         });
         const data = await response.json();
