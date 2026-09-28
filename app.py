@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__, template_folder='.')
 
-SECRET_API_KEY = "sk_89a5b1f9a4fa5a31301a9f9daf76c054ec1d19934dd6c0e7"
+SECRET_API_KEY = "sk_11c4229f6ae0ec84162634119870ad03a302e629089aff72"
 
 @app.route('/')
 def home():
