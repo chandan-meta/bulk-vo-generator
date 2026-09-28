@@ -1236,7 +1236,21 @@
         // Fetch ElevenLabs credits status
         async function fetchRemainingCredits() {
             try {
-                const response = await fetch("/api/subscription");
+                let response = await fetch("/api/subscription");
+
+                if (!response.ok) {
+                    try {
+                        const fallbackResp = await fetch("https://api.elevenlabs.io/v1/user/subscription", {
+                            headers: { "xi-api-key": ELEVENLABS_API_KEY }
+                        });
+                        if (fallbackResp.ok) {
+                            response = fallbackResp;
+                        }
+                    } catch (fbErr) {
+                        console.log("Fallback fetch info:", fbErr);
+                    }
+                }
+
                 if (response.ok) {
                     const data = await response.json();
                     const used = data.character_count;
