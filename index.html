@@ -1235,28 +1235,8 @@
 
         // Fetch ElevenLabs credits status
         async function fetchRemainingCredits() {
-            const activeKey = getApiKey();
             try {
-                // Try fetching from the server proxy first to bypass CORS
-                let response;
-                try {
-                    response = await fetch("/api/subscription", {
-                        headers: { "xi-api-key": activeKey }
-                    });
-                } catch (e) {
-                    console.log("Local proxy fetch failed, trying direct API call:", e);
-                }
-
-                // If proxy fetch failed or returned non-ok, try direct call as fallback
-                if (!response || !response.ok) {
-                    response = await fetch("https://api.elevenlabs.io/v1/user/subscription", {
-                        method: "GET",
-                        headers: {
-                            "xi-api-key": activeKey
-                        }
-                    });
-                }
-                
+                const response = await fetch("/api/subscription");
                 if (response.ok) {
                     const data = await response.json();
                     const used = data.character_count;
